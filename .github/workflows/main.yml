@@ -4,7 +4,7 @@ name: build
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
   pull_request:
     branches: 
       - '*'
@@ -100,7 +100,7 @@ jobs:
         continue-on-error: ${{ matrix.version == 'insiders' }}
 
       # - name: Release
-      #   if: startsWith(matrix.os, 'ubuntu') && matrix.version == 'stable' && github.ref == 'refs/heads/master' && github.repository == 'kevin12314/svn-scm'
+      #   if: startsWith(matrix.os, 'ubuntu') && matrix.version == 'stable' && github.ref == 'refs/heads/main' && github.repository == 'kevin12314/smart-svn-ai'
       #   run: |
       #     pnpm run organize
       #     pnpm run semantic-release
