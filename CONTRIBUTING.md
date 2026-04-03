@@ -43,7 +43,7 @@ This project uses [ESLint](https://eslint.org/) for code linting. You can run ES
 
 ### Debugging
 Run in VS Code
-1. Open the `svn-scm` folder
+1. Open the `smart-svn-ai` folder
 2. Make sure the [dependencies](#dependencies) are installed
 3. Run in [watch](#watch) mode
 4. Choose the `Launch Extension` launch configuration from the launch dropdown in the Debug viewlet and press `F5`.
