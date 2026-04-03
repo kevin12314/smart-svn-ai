@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Ribbon S shape -->
+  <path d="M17.2 5.8 C15.8 3.8 13.2 3 10.8 3.5 C8 4.1 6 6.2 6 8.5 C6 10.8 7.8 12 10.2 12.6 L13.8 13.4 C16.2 14 18 15.2 18 17.5 C18 19.8 16 21.1 13.2 21.5 C10.8 21.8 8.2 21 6.8 20.2"
+        stroke="currentColor" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+  <!-- Large sparkle top-right -->
+  <path d="M20.5 2l.5 1.9L23 4.4l-2 .5L20.5 6.8 20 4.9l-2-.5 2-.5z" fill="currentColor"/>
+  <!-- Small sparkle bottom-left -->
+  <path d="M4 16.5l.36 1.36 1.36.36-1.36.36L4 19.94l-.36-1.36-1.36-.36 1.36-.36z" fill="currentColor"/>
+</svg>

@@ -1,0 +1,39 @@
+import { l10n, SourceControlResourceGroup, window } from "vscode";
+import { checkAndPromptDepth, confirmRevert } from "../input/revert";
+import { Command } from "./command";
+
+export class RevertAll extends Command {
+  constructor() {
+    super("svn.revertAll");
+  }
+
+  public async execute(resourceGroup: SourceControlResourceGroup) {
+    const resourceStates = resourceGroup.resourceStates;
+
+    if (resourceStates.length === 0 || !(await confirmRevert(resourceStates))) {
+      return;
+    }
+
+    const uris = resourceStates.map(resource => resource.resourceUri);
+    const depth = await checkAndPromptDepth(uris);
+
+    if (!depth) {
+      return;
+    }
+
+    await this.runByRepository(uris, async (repository, resources) => {
+      if (!repository) {
+        return;
+      }
+
+      const paths = resources.map(resource => resource.fsPath).reverse();
+
+      try {
+        await repository.revert(paths, depth);
+      } catch (error) {
+        console.log(error);
+        window.showErrorMessage(l10n.t("Unable to revert"));
+      }
+    });
+  }
+}

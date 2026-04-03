@@ -1,0 +1,177 @@
+name: build
+
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    branches: 
+      - '*'
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.version }}
+    runs-on: ${{ matrix.os }}
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        version: ['stable', 'insiders']
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Enable Corepack pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.0 --activate
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
+
+      - name: Install Subversion on Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion xvfb
+
+      - name: Install Subversion on macOS
+        if: runner.os == 'macOS'
+        run: brew install subversion
+
+      - name: Install Subversion on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install svn -y --no-progress
+
+          $candidateDirs = @(
+            'C:\Program Files\Subversion\bin'
+            'C:\Program Files (x86)\Subversion\bin'
+          )
+
+          $svnDir = $candidateDirs | Where-Object { Test-Path (Join-Path $_ 'svn.exe') } | Select-Object -First 1
+
+          if (-not $svnDir) {
+            throw 'svn.exe was not found after Chocolatey installation.'
+          }
+
+          $svnDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $env:PATH = "$svnDir;$env:PATH"
+
+          Write-Host "Using SVN from: $svnDir"
+          & (Join-Path $svnDir 'svn.exe') --version --quiet
+          & (Join-Path $svnDir 'svnadmin.exe') --version --quiet
+      
+      - name: Compile sources for tests
+        run: pnpm run test-compile
+
+      - name: Cache VSCode binary
+        id: cache-vscode
+        uses: actions/cache@v5
+        with:
+          path: .vscode-test
+          key: vscode-${{ runner.os }}-${{ matrix.version }}-${{ github.run_id }}
+          restore-keys: |
+            vscode-${{ runner.os }}-${{ matrix.version }}-
+            vscode-${{ runner.os }}-
+      
+      - name: Run tests on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test
+        env:
+          CODE_VERSION: ${{ matrix.version }}
+        continue-on-error: ${{ matrix.version == 'insiders' }}
+
+      - name: Run tests on macOS and Windows
+        if: runner.os != 'Linux'
+        run: pnpm test
+        env:
+          CODE_VERSION: ${{ matrix.version }}
+        continue-on-error: ${{ matrix.version == 'insiders' }}
+
+      # - name: Release
+      #   if: startsWith(matrix.os, 'ubuntu') && matrix.version == 'stable' && github.ref == 'refs/heads/master' && github.repository == 'kevin12314/svn-scm'
+      #   run: |
+      #     pnpm run organize
+      #     pnpm run semantic-release
+      #   env:
+      #     VSCE_TOKEN: ${{ secrets.vsceToken }}
+      #     GITHUB_TOKEN: ${{ secrets.githubToken }}
+      #     GH_TOKEN: ${{ secrets.githubToken }}
+      #     GIT_AUTHOR_EMAIL: ${{ secrets.gitEmail }}
+      #     GIT_COMMITTER_EMAIL: ${{ secrets.gitEmail }}
+      #     GIT_AUTHOR_NAME: ${{ secrets.gitName }}
+      #     GIT_COMMITTER_NAME: ${{ secrets.gitName }}
+
+  eslint:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Enable Corepack pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.0 --activate
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
+
+      - name: Lint check
+        run: pnpm exec eslint "src/**/*.ts" -f stylish
+
+  artifact:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Enable Corepack pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.0 --activate
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
+
+      - name: Package extension
+        run: pnpm run package:vsix
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: "smart-svn-ai-${{ github.sha }}.vsix"
+          path: "smart-svn-ai.vsix"
+
+      - name: Package open-vsx extension
+        run: pnpm run package:ovsx
+
+      - name: Upload open-vsx artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: "smart-svn-ai-ovsx-${{ github.sha }}.vsix"
+          path: "smart-svn-ai-ovsx.vsix"

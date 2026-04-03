@@ -1,0 +1,7 @@
+/.vscode-test
+/coverage
+/css
+/node_modules
+/out
+/test-reports
+smart-svn-ai*.vsix

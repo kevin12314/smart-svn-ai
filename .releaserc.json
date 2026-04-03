@@ -1,0 +1,31 @@
+{
+  "verifyConditions": [
+    "@semantic-release/github",
+    "@semantic-release/git",
+    "@semantic-release/changelog",
+    "semantic-release-vsce"
+  ],
+  "prepare": [
+    "@semantic-release/npm",
+    "@semantic-release/changelog",
+    {
+      "path": "@semantic-release/git",
+      "assets": ["CHANGELOG.md", "README.md", "package.json", "pnpm-lock.yaml"],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    },
+    {
+      "path": "@semantic-release/exec",
+      "prepareCmd": "pnpm run package:vsix"
+    }
+  ],
+  "publish": [
+    {
+      "path": "@semantic-release/exec",
+      "publishCmd": "pnpm exec vsce publish --packagePath smart-svn-ai.vsix --pat $VSCE_TOKEN"
+    },
+    {
+      "path": "@semantic-release/github",
+      "assets": "smart-svn-ai.vsix"
+    }
+  ]
+}

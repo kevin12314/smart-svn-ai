@@ -1,0 +1,102 @@
+import {
+  SourceControlResourceState,
+  TextDocumentShowOptions,
+  Uri,
+  ViewColumn,
+  window,
+  workspace
+} from "vscode";
+import { exists, stat } from "../fs";
+import { Resource } from "../resource";
+import IncomingChangeNode from "../treeView/nodes/incomingChangeNode";
+import { fromSvnUri } from "../uri";
+import { Command } from "./command";
+
+export class OpenFile extends Command {
+  constructor() {
+    super("svn.openFile");
+  }
+
+  public async execute(
+    arg?: Resource | Uri | IncomingChangeNode,
+    ...resourceStates: SourceControlResourceState[]
+  ) {
+    const preserveFocus = arg instanceof Resource;
+    const normalizedResourceStates = this.normalizeResourceStates(
+      resourceStates
+    ).filter((state): state is Resource => state instanceof Resource);
+
+    let uris: Uri[] | undefined;
+
+    if (arg instanceof Uri) {
+      if (arg.scheme === "svn") {
+        uris = [Uri.file(fromSvnUri(arg).fsPath)];
+      } else if (arg.scheme === "file") {
+        uris = [arg];
+      }
+    } else if (arg instanceof IncomingChangeNode) {
+      const resource = new Resource(
+        arg.uri,
+        arg.type,
+        undefined,
+        arg.props,
+        true
+      );
+
+      uris = [resource.resourceUri];
+    } else {
+      const resource = arg;
+
+      if (!(resource instanceof Resource)) {
+        // can happen when called from a keybinding
+        // TODO(@JohnstonCode) fix this
+        // resource = this.getSCMResource();
+      }
+
+      if (resource) {
+        const dedupedUris = new Map<string, Uri>();
+
+        for (const selectedResource of normalizedResourceStates) {
+          dedupedUris.set(
+            selectedResource.resourceUri.toString(),
+            selectedResource.resourceUri
+          );
+        }
+
+        dedupedUris.set(resource.resourceUri.toString(), resource.resourceUri);
+        uris = Array.from(dedupedUris.values());
+      }
+    }
+
+    if (!uris) {
+      return;
+    }
+
+    const preview = uris.length === 1 ? true : false;
+    const activeTextEditor = window.activeTextEditor;
+    for (const uri of uris) {
+      if (
+        !uri ||
+        ((await exists(uri.fsPath)) && (await stat(uri.fsPath)).isDirectory())
+      ) {
+        continue;
+      }
+
+      const opts: TextDocumentShowOptions = {
+        preserveFocus,
+        preview,
+        viewColumn: ViewColumn.Active
+      };
+
+      if (
+        activeTextEditor &&
+        activeTextEditor.document.uri.toString() === uri.toString()
+      ) {
+        opts.selection = activeTextEditor.selection;
+      }
+
+      const document = await workspace.openTextDocument(uri);
+      await window.showTextDocument(document, opts);
+    }
+  }
+}

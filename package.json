@@ -1,0 +1,1624 @@
+{
+    "name": "smart-svn-ai",
+    "displayName": "%extension.displayName%",
+    "description": "%extension.description%",
+    "version": "3.5.1",
+    "publisher": "kevin12314",
+    "engines": {
+        "vscode": "^1.91.0"
+    },
+    "packageManager": "pnpm@10.17.0",
+    "private": true,
+    "icon": "images/log.png",
+    "homepage": "https://github.com/kevin12314/smart-svn-ai/blob/master/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/kevin12314/smart-svn-ai.git"
+    },
+    "bugs": {
+        "url": "https://github.com/kevin12314/smart-svn-ai/issues"
+    },
+    "categories": [
+        "Other",
+        "SCM Providers"
+    ],
+    "keywords": [
+        "multi-root ready",
+        "scm",
+        "svn",
+        "subversion"
+    ],
+    "activationEvents": [
+        "onStartupFinished",
+        "workspaceContains:**/.svn"
+    ],
+    "main": "./out/extension",
+    "l10n": "./l10n",
+    "scripts": {
+        "build": "pnpm run build:ts && pnpm run build:css",
+        "build:css": "sass scss:css --style=compressed --quiet-deps --silence-deprecation=import,global-builtin",
+        "build:ts": "webpack --mode production",
+        "compile": "webpack --mode development --watch",
+        "lint": "eslint \"src/**/*.ts\"",
+        "lint:fix": "eslint \"src/**/*.ts\" --fix",
+        "l10n:export": "pnpm exec @vscode/l10n-dev export --outDir ./l10n ./src",
+        "l10n:pseudo": "pnpm exec @vscode/l10n-dev generate-pseudo -o ./l10n ./l10n/bundle.l10n.json ./package.nls.json",
+        "l10n:check": "node ./scripts/check-l10n-missing.js",
+        "organize": "node ./out/tools/organize.js",
+        "package:ovsx": "pnpm exec vsce package --follow-symlinks -o smart-svn-ai-ovsx.vsix",
+        "publish:vsix": "pnpm exec vsce publish -i smart-svn-ai.vsix",
+        "package:vsix": "pnpm exec vsce package --follow-symlinks -o smart-svn-ai.vsix",
+        "semantic-release": "semantic-release",
+        "style-check": "prettylint 'src/**/*.ts'",
+        "style-fix": "prettier --write \"src/**/*.ts\"",
+        "test": "node ./out/test/runTest.js",
+        "test-compile": "tsc -p ./",
+        "tools:genReadme": "node ./out/tools/generateConfigSectionForReadme.js",
+        "vscode:prepublish": "pnpm run lint && pnpm run build",
+        "watch:css": "sass --watch scss:css --style=compressed --quiet-deps --silence-deprecation=import,global-builtin"
+    },
+    "dependencies": {
+        "iconv-lite-umd": "^0.6.10",
+        "jschardet": "^3.0.0"
+    },
+    "devDependencies": {
+        "@semantic-release/changelog": "^5.0.1",
+        "@semantic-release/exec": "^5.0.0",
+        "@semantic-release/git": "^9.0.0",
+        "@types/glob": "^7.1.4",
+        "@types/minimatch": "^3.0.5",
+        "@types/mocha": "^9.0.0",
+        "@types/node": "^12.11.7",
+        "@types/semver": "^7.3.8",
+        "@types/tmp": "0.2.1",
+        "@types/vscode": "1.91.0",
+        "@types/xml2js": "^0.4.9",
+        "@typescript-eslint/eslint-plugin": "^8.57.1",
+        "@typescript-eslint/parser": "^8.57.1",
+        "@vscode/l10n-dev": "^0.0.18",
+        "@vscode/test-electron": "^2.5.2",
+        "@vscode/vsce": "^3.7.1",
+        "chardet": "^1.3.0",
+        "dayjs": "^1.10.6",
+        "decache": "^4.6.0",
+        "eslint": "^8.57.1",
+        "eslint-config-prettier": "^7.2.0",
+        "eslint-plugin-prettier": "^3.4.0",
+        "glob": "^7.1.7",
+        "milligram": "^1.4.1",
+        "minimatch": "^3.0.4",
+        "mocha": "^9.0.3",
+        "original-fs": "^1.0.0",
+        "ovsx": "0.2.0",
+        "prettier": "^2.2.1",
+        "prettylint": "^1.0.0",
+        "sass": "^1.93.2",
+        "semantic-release": "^17.4.4",
+        "semantic-release-vsce": "^4.0.1",
+        "semver": "^7.3.5",
+        "tmp": "0.2.1",
+        "ts-loader": "^9.5.4",
+        "typescript": "5.9.3",
+        "webpack": "^5.98.0",
+        "webpack-cli": "^4.7.2",
+        "xml2js": "^0.4.19"
+    },
+    "config": {
+        "commitizen": {
+            "path": "cz-conventional-changelog"
+        }
+    },
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "svnActivity",
+                    "title": "%viewsContainers.activitybar.svnActivity.title%",
+                    "icon": "icons/smart-svn-ai-logo.svg"
+                }
+            ]
+        },
+        "views": {
+            "explorer": [
+                {
+                    "id": "svn",
+                    "name": "%views.explorer.svn.name%",
+                    "icon": "icons/smart-svn-ai-logo.svg"
+                }
+            ],
+            "svnActivity": [
+                {
+                    "id": "repolog",
+                    "name": "%views.svnActivity.repolog.name%",
+                    "icon": "icons/smart-svn-ai-logo.svg",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "id": "itemlog",
+                    "name": "%views.svnActivity.itemlog.name%",
+                    "icon": "icons/smart-svn-ai-logo.svg",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "id": "branchchanges",
+                    "name": "%views.svnActivity.branchchanges.name%",
+                    "icon": "icons/smart-svn-ai-logo.svg",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "svn.add",
+                "title": "%commands.svn.add.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(add)"
+            },
+            {
+                "command": "svn.addToIgnoreExplorer",
+                "title": "%commands.svn.addToIgnoreExplorer.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.addToIgnoreSCM",
+                "title": "%commands.svn.addToIgnoreSCM.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.branchchanges.openDiff",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.branchchanges.openDiff.title%"
+            },
+            {
+                "command": "svn.branchchanges.refresh",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.branchchanges.refresh.title%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "svn.changelist",
+                "title": "%commands.svn.changelist.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(list-unordered)"
+            },
+            {
+                "command": "svn.checkout",
+                "title": "%commands.svn.checkout.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.cleanup",
+                "title": "%commands.svn.cleanup.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.close",
+                "title": "%commands.svn.close.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.commit",
+                "title": "%commands.svn.commit.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(check)"
+            },
+            {
+                "command": "svn.commitWithMessage",
+                "title": "%commands.svn.commitWithMessage.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(check)"
+            },
+            {
+                "command": "svn.completeMerge",
+                "title": "%commands.svn.completeMerge.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(pass-filled)"
+            },
+            {
+                "command": "svn.generateCommitMessage",
+                "title": "%commands.svn.generateCommitMessage.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(sparkle)"
+            },
+            {
+                "command": "svn.setOpenAICompatibleApiKey",
+                "title": "%commands.svn.setOpenAICompatibleApiKey.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.clearOpenAICompatibleApiKey",
+                "title": "%commands.svn.clearOpenAICompatibleApiKey.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.checkOpenAICompatibleApiKey",
+                "title": "%commands.svn.checkOpenAICompatibleApiKey.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.setAzureOpenAIApiKey",
+                "title": "%commands.svn.setAzureOpenAIApiKey.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.clearAzureOpenAIApiKey",
+                "title": "%commands.svn.clearAzureOpenAIApiKey.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.checkAzureOpenAIApiKey",
+                "title": "%commands.svn.checkAzureOpenAIApiKey.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.deleteUnversioned",
+                "title": "%commands.svn.deleteUnversioned.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.itemlog.copymsg",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.itemlog.copymsg.title%"
+            },
+            {
+                "command": "svn.itemlog.copydetails",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.itemlog.copydetails.title%"
+            },
+            {
+                "command": "svn.itemlog.copyrevision",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.itemlog.copyrevision.title%"
+            },
+            {
+                "command": "svn.itemlog.openDiff",
+                "title": "%commands.svn.itemlog.openDiff.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.itemlog.openDiffBase",
+                "title": "%commands.svn.itemlog.openDiffBase.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.itemlog.openFileRemote",
+                "title": "%commands.svn.itemlog.openFileRemote.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.itemlog.refresh",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.itemlog.refresh.title%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "svn.copyPermalink",
+                "title": "%commands.svn.copyPermalink.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.log",
+                "title": "%commands.svn.log.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.lock",
+                "title": "%commands.svn.lock.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.merge",
+                "title": "%commands.svn.merge.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.openChangeBase",
+                "title": "%commands.svn.openChangeBase.title%",
+                "category": "%commands.category.svn%",
+                "icon": {
+                    "light": "icons/light/open-change-base.svg",
+                    "dark": "icons/dark/open-change-base.svg"
+                }
+            },
+            {
+                "command": "svn.openChangeHead",
+                "title": "%commands.svn.openChangeHead.title%",
+                "category": "%commands.category.svn%",
+                "icon": {
+                    "light": "icons/light/open-change-head.svg",
+                    "dark": "icons/dark/open-change-head.svg"
+                }
+            },
+            {
+                "command": "svn.openChangePrev",
+                "title": "%commands.svn.openChangePrev.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.openFile",
+                "title": "%commands.svn.openFile.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "svn.openHEADFile",
+                "title": "%commands.svn.openHEADFile.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.openMergeEditor",
+                "title": "%commands.svn.openMergeEditor.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.patch",
+                "title": "%commands.svn.patch.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.patchAll",
+                "title": "%commands.svn.patchAll.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.patchChangeList",
+                "title": "%commands.svn.patchChangeList.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.pickCommitMessage",
+                "title": "%commands.svn.pickCommitMessage.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(history)"
+            },
+            {
+                "command": "svn.refresh",
+                "title": "%commands.svn.refresh.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "svn.refreshRemoteChanges",
+                "title": "%commands.svn.refreshRemoteChanges.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "svn.remove",
+                "title": "%commands.svn.remove.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.removeUnversioned",
+                "title": "%commands.svn.removeUnversioned.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.renameExplorer",
+                "title": "%commands.svn.renameExplorer.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.repolog.addrepolike",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.addrepolike.title%",
+                "icon": "$(add)"
+            },
+            {
+                "command": "svn.repolog.filterAuthor",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.filterAuthor.title%",
+                "icon": "$(zap)"
+            },
+            {
+                "command": "svn.repolog.filterMsg",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.filterMsg.title%",
+                "icon": "$(filter)"
+            },
+            {
+                "command": "svn.repolog.copymsg",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.copymsg.title%"
+            },
+            {
+                "command": "svn.repolog.copydetails",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.copydetails.title%"
+            },
+            {
+                "command": "svn.repolog.copyrevision",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.copyrevision.title%"
+            },
+            {
+                "command": "svn.repolog.openDiff",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.openDiff.title%"
+            },
+            {
+                "command": "svn.repolog.openFileLocal",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.openFileLocal.title%"
+            },
+            {
+                "command": "svn.repolog.openFileRemote",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.openFileRemote.title%"
+            },
+            {
+                "command": "svn.repolog.refresh",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.refresh.title%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "svn.repolog.remove",
+                "category": "%commands.category.svn%",
+                "title": "%commands.svn.repolog.remove.title%"
+            },
+            {
+                "command": "svn.resolve",
+                "title": "%commands.svn.resolve.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(check)"
+            },
+            {
+                "command": "svn.resolveAll",
+                "title": "%commands.svn.resolveAll.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.revert",
+                "title": "%commands.svn.revert.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(discard)"
+            },
+            {
+                "command": "svn.revertAll",
+                "title": "%commands.svn.revertAll.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(discard)"
+            },
+            {
+                "command": "svn.revertChange",
+                "title": "%commands.svn.revertChange.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(discard)"
+            },
+            {
+                "command": "svn.revertExplorer",
+                "title": "%commands.svn.revertExplorer.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(discard)"
+            },
+            {
+                "command": "svn.searchLogByRevision",
+                "title": "%commands.svn.searchLogByRevision.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.searchLogByText",
+                "title": "%commands.svn.searchLogByText.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.switchBranch",
+                "title": "%commands.svn.switchBranch.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.treeview.pullIncomingChange",
+                "title": "%commands.svn.treeview.pullIncomingChange.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(cloud-download)"
+            },
+            {
+                "command": "svn.treeview.refreshProvider",
+                "title": "%commands.svn.treeview.refreshProvider.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "svn.update",
+                "title": "%commands.svn.update.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(cloud-download)"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "svn.add",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.addToIgnoreExplorer",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.addToIgnoreSCM",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.branchchanges.openDiff",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.branchchanges.refresh",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.changelist",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.checkout",
+                    "when": "config.svn.enabled"
+                },
+                {
+                    "command": "svn.cleanup",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.close",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.commit",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.commitWithMessage",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.deleteUnversioned",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.copymsg",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.copydetails",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.copyrevision",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.openDiff",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.openDiffBase",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.openFileRemote",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.itemlog.refresh",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.copyPermalink",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.log",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.lock",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.merge",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.openChangeBase",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && svnActiveEditorHasChanges"
+                },
+                {
+                    "command": "svn.openChangeHead",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && svnActiveEditorHasChanges"
+                },
+                {
+                    "command": "svn.openChangePrev",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.openFile",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.openHEADFile",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.patch",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.patchAll",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.patchChangeList",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.pickCommitMessage",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.refresh",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.refreshRemoteChanges",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.remove",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.removeUnversioned",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && isSvn19orGreater"
+                },
+                {
+                    "command": "svn.renameExplorer",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.filterAuthor",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.filterMsg",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.addrepolike",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.copymsg",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.copydetails",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.copyrevision",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.openDiff",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.openFileLocal",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.openFileRemote",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.refresh",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.repolog.remove",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.resolve",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.resolveAll",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.revert",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.revertAll",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.revertChange",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.revertExplorer",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.searchLogByRevision",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.searchLogByText",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && isSvn18orGreater"
+                },
+                {
+                    "command": "svn.switchBranch",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.treeview.pullIncomingChange",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.treeview.refreshProvider",
+                    "when": "false"
+                },
+                {
+                    "command": "svn.update",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "svn.treeview.refreshProvider",
+                    "when": "view == svn",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.repolog.refresh",
+                    "when": "view == repolog",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.repolog.filterAuthor",
+                    "when": "view == repolog",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.repolog.filterMsg",
+                    "when": "view == repolog",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.repolog.addrepolike",
+                    "when": "view == repolog",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.itemlog.refresh",
+                    "when": "view == itemlog",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.branchchanges.refresh",
+                    "when": "view == branchchanges",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "svn.openHEADFile",
+                    "when": "viewItem =~ /incomingChange:(added|modified)/"
+                },
+                {
+                    "command": "svn.openFile",
+                    "when": "viewItem =~ /incomingChange:(modified|deleted)/"
+                },
+                {
+                    "command": "svn.treeview.pullIncomingChange",
+                    "when": "viewItem =~ /incomingChange:*/"
+                },
+                {
+                    "command": "svn.openChangeHead",
+                    "when": "viewItem == incomingChange:modified"
+                },
+                {
+                    "command": "svn.repolog.remove",
+                    "when": "view == repolog && viewItem == userrepo"
+                },
+                {
+                    "command": "svn.itemlog.openFileRemote",
+                    "when": "view == itemlog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.itemlog.openDiff",
+                    "when": "view == itemlog && viewItem == diffable",
+                    "group": "1_diff"
+                },
+                {
+                    "command": "svn.itemlog.openDiffBase",
+                    "when": "view == itemlog && viewItem == diffable",
+                    "group": "1_diff"
+                },
+                {
+                    "command": "svn.itemlog.copymsg",
+                    "when": "view == itemlog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.itemlog.copydetails",
+                    "when": "view == itemlog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.itemlog.copyrevision",
+                    "when": "view == itemlog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.repolog.openDiff",
+                    "when": "view == repolog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.repolog.openFileRemote",
+                    "when": "view == repolog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.repolog.openFileLocal",
+                    "when": "view == repolog && viewItem == diffable"
+                },
+                {
+                    "command": "svn.repolog.refresh",
+                    "when": "view == repolog && viewItem =~ /.*repo/"
+                },
+                {
+                    "command": "svn.repolog.copymsg",
+                    "when": "view == repolog && viewItem == commit"
+                },
+                {
+                    "command": "svn.repolog.copydetails",
+                    "when": "view == repolog && viewItem == commit"
+                },
+                {
+                    "command": "svn.repolog.copyrevision",
+                    "when": "view == repolog && viewItem == commit"
+                }
+            ],
+            "scm/title": [
+                {
+                    "command": "svn.commitWithMessage",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.refresh",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.pickCommitMessage",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.generateCommitMessage",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.switchBranch",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.merge",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.update",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.patchAll",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.resolveAll",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.log",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.cleanup",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.removeUnversioned",
+                    "when": "config.svn.enabled && scmProvider == svn && isSvn19orGreater"
+                },
+                {
+                    "command": "svn.patchChangeList",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                }
+            ],
+            "scm/sourceControl": [
+                {
+                    "command": "svn.close",
+                    "group": "navigation",
+                    "when": "scmProvider == svn"
+                }
+            ],
+            "scm/resourceGroup/context": [
+                {
+                    "command": "svn.refreshRemoteChanges",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == remotechanges",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.refreshRemoteChanges",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == remotechanges",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.update",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == remotechanges",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.update",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == remotechanges",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.revertAll",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == changes",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.revertAll",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == changes",
+                    "group": "inline"
+                }
+            ],
+            "scm/resourceState/context": [
+                {
+                    "command": "svn.add",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == unversioned",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.add",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == unversioned",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "svn.openFile",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != external",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.openHEADFile",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.openChangeBase",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.openChangeHead",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.patch",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.resolve",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == conflicts",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.resolve",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == conflicts",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "svn.openMergeEditor",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == conflicts",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.completeMerge",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == conflicts",
+                    "group": "navigation"
+                },
+                {
+                    "command": "svn.changelist",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.changelist",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "svn.commit",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "svn.revert",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "2_modification"
+                },
+                {
+                    "command": "svn.revert",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.remove",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup != unversioned && scmResourceGroup != external && scmResourceGroup != conflicts && scmResourceGroup != remotechanges",
+                    "group": "2_modification"
+                },
+                {
+                    "command": "svn.deleteUnversioned",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == unversioned",
+                    "group": "2_modification"
+                },
+                {
+                    "command": "svn.addToIgnoreSCM",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == unversioned",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "svn.treeview.pullIncomingChange",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == remotechanges",
+                    "group": "inline"
+                },
+                {
+                    "command": "svn.treeview.pullIncomingChange",
+                    "when": "config.svn.enabled && scmProvider == svn && scmResourceGroup == remotechanges",
+                    "group": "3_modification"
+                }
+            ],
+            "scm/change/title": [
+                {
+                    "command": "svn.revertChange",
+                    "when": "config.svn.enabled && originalResourceScheme == svn"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "svn.completeMerge",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && isMergeEditor"
+                },
+                {
+                    "command": "svn.openFile",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension && resourceScheme != merge-conflicts.conflicts-diff"
+                },
+                {
+                    "command": "svn.openChangeBase",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && svnActiveEditorHasChanges && !isInDiffEditor && resourceScheme == file"
+                },
+                {
+                    "command": "svn.openChangeHead",
+                    "group": "navigation",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && svnActiveEditorHasChanges && !isInDiffEditor && resourceScheme == file"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "svn.addToIgnoreExplorer",
+                    "group": "9_svn",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.lock",
+                    "group": "7_modification",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && !explorerResourceIsFolder && !inputFocus"
+                },
+                {
+                    "command": "svn.renameExplorer",
+                    "group": "7_modification",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && !inputFocus"
+                },
+                {
+                    "command": "svn.changelist",
+                    "group": "9_svn",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.revertExplorer",
+                    "group": "7_modification",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "%configuration.title%",
+            "properties": {
+                "svn.autorefresh": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.autorefresh.description%",
+                    "default": true
+                },
+                "svn.commit.changes.selectedAll": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.commit.changes.selectedAll.description%",
+                    "default": true
+                },
+                "svn.commit.checkEmptyMessage": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.commit.checkEmptyMessage.description%",
+                    "default": true
+                },
+                "svn.commitMessageGeneration.mode": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "ai",
+                        "template"
+                    ],
+                    "markdownEnumDescriptions": [
+                        "%configuration.svn.commitMessageGeneration.mode.auto.description%",
+                        "%configuration.svn.commitMessageGeneration.mode.ai.description%",
+                        "%configuration.svn.commitMessageGeneration.mode.template.description%"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.mode.description%",
+                    "default": "auto"
+                },
+                "svn.commitMessageGeneration.provider": {
+                    "type": "string",
+                    "enum": [
+                        "vscode-lm",
+                        "openai-compatible",
+                        "azure-openai"
+                    ],
+                    "markdownEnumDescriptions": [
+                        "%configuration.svn.commitMessageGeneration.provider.vscodeLM.description%",
+                        "%configuration.svn.commitMessageGeneration.provider.openAICompatible.description%",
+                        "%configuration.svn.commitMessageGeneration.provider.azureOpenAI.description%"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.provider.description%",
+                    "default": "vscode-lm"
+                },
+                "svn.commitMessageGeneration.vscodeLM.preferredVendor": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.vscodeLM.preferredVendor.description%",
+                    "default": null
+                },
+                "svn.commitMessageGeneration.vscodeLM.preferredModelFamily": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.vscodeLM.preferredModelFamily.description%",
+                    "default": null
+                },
+                "svn.commitMessageGeneration.vscodeLM.preferredModelVersion": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.vscodeLM.preferredModelVersion.description%",
+                    "default": "raptor-mini"
+                },
+                "svn.commitMessageGeneration.outputLanguage": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "en",
+                        "ko",
+                        "ja",
+                        "zh-CN",
+                        "zh-TW"
+                    ],
+                    "markdownEnumDescriptions": [
+                        "%configuration.svn.commitMessageGeneration.outputLanguage.auto.description%",
+                        "%configuration.svn.commitMessageGeneration.outputLanguage.en.description%",
+                        "%configuration.svn.commitMessageGeneration.outputLanguage.ko.description%",
+                        "%configuration.svn.commitMessageGeneration.outputLanguage.ja.description%",
+                        "%configuration.svn.commitMessageGeneration.outputLanguage.zhCN.description%",
+                        "%configuration.svn.commitMessageGeneration.outputLanguage.zhTW.description%"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.outputLanguage.description%",
+                    "default": "auto"
+                },
+                "svn.commitMessageGeneration.includeDiff": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.commitMessageGeneration.includeDiff.description%",
+                    "default": true
+                },
+                "svn.commitMessageGeneration.maxDiffCharacters": {
+                    "type": "number",
+                    "minimum": 1000,
+                    "description": "%configuration.svn.commitMessageGeneration.maxDiffCharacters.description%",
+                    "default": 12000
+                },
+                "svn.commitMessageGeneration.timeout": {
+                    "type": "number",
+                    "minimum": 1000,
+                    "description": "%configuration.svn.commitMessageGeneration.timeout.description%",
+                    "default": 30000
+                },
+                "svn.commitMessageGeneration.openAICompatible.baseUrl": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.openAICompatible.baseUrl.description%",
+                    "default": ""
+                },
+                "svn.commitMessageGeneration.openAICompatible.model": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.openAICompatible.model.description%",
+                    "default": ""
+                },
+                "svn.commitMessageGeneration.openAICompatible.apiType": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "responses",
+                        "chat-completions"
+                    ],
+                    "markdownEnumDescriptions": [
+                        "%configuration.svn.commitMessageGeneration.openAICompatible.apiType.auto.description%",
+                        "%configuration.svn.commitMessageGeneration.openAICompatible.apiType.responses.description%",
+                        "%configuration.svn.commitMessageGeneration.openAICompatible.apiType.chatCompletions.description%"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.openAICompatible.apiType.description%",
+                    "default": "auto"
+                },
+                "svn.commitMessageGeneration.openAICompatible.apiKeyManagement": {
+                    "type": "string",
+                    "markdownDescription": "%configuration.svn.commitMessageGeneration.openAICompatible.apiKeyManagement.description%",
+                    "default": "",
+                    "scope": "application"
+                },
+                "svn.commitMessageGeneration.openAICompatible.organization": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.openAICompatible.organization.description%",
+                    "default": null
+                },
+                "svn.commitMessageGeneration.openAICompatible.project": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.openAICompatible.project.description%",
+                    "default": null
+                },
+                "svn.commitMessageGeneration.azureOpenAI.endpoint": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.azureOpenAI.endpoint.description%",
+                    "default": ""
+                },
+                "svn.commitMessageGeneration.azureOpenAI.deployment": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.azureOpenAI.deployment.description%",
+                    "default": ""
+                },
+                "svn.commitMessageGeneration.azureOpenAI.apiVersion": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.azureOpenAI.apiVersion.description%",
+                    "default": "2024-10-21"
+                },
+                "svn.commitMessageGeneration.azureOpenAI.apiType": {
+                    "type": "string",
+                    "enum": [
+                        "responses",
+                        "chat-completions"
+                    ],
+                    "markdownEnumDescriptions": [
+                        "%configuration.svn.commitMessageGeneration.azureOpenAI.apiType.responses.description%",
+                        "%configuration.svn.commitMessageGeneration.azureOpenAI.apiType.chatCompletions.description%"
+                    ],
+                    "description": "%configuration.svn.commitMessageGeneration.azureOpenAI.apiType.description%",
+                    "default": "chat-completions"
+                },
+                "svn.commitMessageGeneration.azureOpenAI.apiKeyManagement": {
+                    "type": "string",
+                    "markdownDescription": "%configuration.svn.commitMessageGeneration.azureOpenAI.apiKeyManagement.description%",
+                    "default": "",
+                    "scope": "application"
+                },
+                "svn.conflicts.autoResolve": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.conflicts.autoResolve.description%",
+                    "default": false
+                },
+                "svn.default.encoding": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.default.encoding.description%",
+                    "default": null
+                },
+                "svn.defaultCheckoutDirectory": {
+                    "type": "string",
+                    "default": null,
+                    "description": "%configuration.svn.defaultCheckoutDirectory.description%"
+                },
+                "svn.delete.actionForDeletedFiles": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "prompt",
+                        "remove"
+                    ],
+                    "description": "%configuration.svn.delete.actionForDeletedFiles.description%",
+                    "default": "prompt"
+                },
+                "svn.delete.ignoredRulesForDeletedFiles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "%configuration.svn.delete.ignoredRulesForDeletedFiles.description%",
+                    "default": []
+                },
+                "svn.detectExternals": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.svn.detectExternals.description%"
+                },
+                "svn.detectIgnored": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.svn.detectIgnored.description%"
+                },
+                "svn.diff.withHead": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.diff.withHead.description%",
+                    "default": true
+                },
+                "svn.enabled": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.enabled.description%",
+                    "default": true
+                },
+                "svn.experimental.detect_encoding": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.experimental.detect_encoding.description%",
+                    "default": false
+                },
+                "svn.experimental.encoding_priority": {
+                    "type": "array",
+                    "description": "%configuration.svn.experimental.encoding_priority.description%",
+                    "default": [],
+                    "examples": [
+                        [
+                            "UTF-8",
+                            "GB18030",
+                            "windows-1251"
+                        ]
+                    ]
+                },
+                "svn.gravatar.icon_url": {
+                    "type": "string",
+                    "description": "%configuration.svn.gravatar.icon_url.description%",
+                    "examples": [
+                        "https://www.gravatar.com/avatar/<AUTHOR_MD5>.jpg?s=<SIZE>&d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/<AUTHOR>/128"
+                    ],
+                    "default": "https://www.gravatar.com/avatar/<AUTHOR_MD5>.jpg?s=<SIZE>&d=robohash"
+                },
+                "svn.gravatars.enabled": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.gravatars.enabled.description%",
+                    "default": true
+                },
+                "svn.ignoreMissingSvnWarning": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.ignoreMissingSvnWarning.description%",
+                    "default": false
+                },
+                "svn.ignoreRepositories": {
+                    "type": [
+                        "array",
+                        null
+                    ],
+                    "default": null,
+                    "scope": "resource",
+                    "description": "%configuration.svn.ignoreRepositories.description%"
+                },
+                "svn.ignoreWorkingCopyIsTooOld": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.ignoreWorkingCopyIsTooOld.description%",
+                    "default": false
+                },
+                "svn.layout.branchesRegex": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.layout.branchesRegex.description%",
+                    "default": "branches/([^/]+)(/.*)?"
+                },
+                "svn.layout.branchesRegexName": {
+                    "type": [
+                        "number"
+                    ],
+                    "description": "%configuration.svn.layout.branchesRegexName.description%",
+                    "default": 1
+                },
+                "svn.layout.showFullName": {
+                    "type": [
+                        "boolean"
+                    ],
+                    "description": "%configuration.svn.layout.showFullName.description%",
+                    "default": true
+                },
+                "svn.layout.tagRegexName": {
+                    "type": [
+                        "number"
+                    ],
+                    "description": "%configuration.svn.layout.tagRegexName.description%",
+                    "default": 1
+                },
+                "svn.layout.tagsRegex": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.layout.tagsRegex.description%",
+                    "default": "tags/([^/]+)(/.*)?"
+                },
+                "svn.layout.trunkRegex": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.layout.trunkRegex.description%",
+                    "default": "(trunk)(/.*)?"
+                },
+                "svn.layout.trunkRegexName": {
+                    "type": [
+                        "number"
+                    ],
+                    "description": "%configuration.svn.layout.trunkRegexName.description%",
+                    "default": 1
+                },
+                "svn.log.length": {
+                    "type": "number",
+                    "minimum": 1,
+                    "description": "%configuration.svn.log.length.description%",
+                    "default": 50
+                },
+                "svn.multipleFolders.depth": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "%configuration.svn.multipleFolders.depth.description%",
+                    "default": 4
+                },
+                "svn.multipleFolders.enabled": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.multipleFolders.enabled.description%",
+                    "default": false
+                },
+                "svn.multipleFolders.ignore": {
+                    "type": "array",
+                    "description": "%configuration.svn.multipleFolders.ignore.description%",
+                    "default": [
+                        "**/.git",
+                        "**/.hg",
+                        "**/vendor",
+                        "**/node_modules"
+                    ]
+                },
+                "svn.path": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%configuration.svn.path.description%",
+                    "default": null,
+                    "scope": "machine"
+                },
+                "svn.previousCommitsUser": {
+                    "type": "string",
+                    "description": "%configuration.svn.previousCommitsUser.description%",
+                    "default": null
+                },
+                "svn.refresh.remoteChanges": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.refresh.remoteChanges.description%",
+                    "default": false
+                },
+                "svn.remoteChanges.checkFrequency": {
+                    "type": "number",
+                    "description": "%configuration.svn.remoteChanges.checkFrequency.description%",
+                    "default": 300
+                },
+                "svn.showOutput": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.showOutput.description%",
+                    "default": false
+                },
+                "svn.showUpdateMessage": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.showUpdateMessage.description%",
+                    "default": true
+                },
+                "svn.sourceControl.changesLeftClick": {
+                    "type": "string",
+                    "enum": [
+                        "open",
+                        "open diff"
+                    ],
+                    "description": "%configuration.svn.sourceControl.changesLeftClick.description%",
+                    "default": "open diff"
+                },
+                "svn.sourceControl.combineExternalIfSameServer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%configuration.svn.sourceControl.combineExternalIfSameServer.description%"
+                },
+                "svn.sourceControl.countUnversioned": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.sourceControl.countUnversioned.description%",
+                    "default": true
+                },
+                "svn.sourceControl.hideUnversioned": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.sourceControl.hideUnversioned.description%",
+                    "default": false
+                },
+                "svn.sourceControl.ignore": {
+                    "type": "array",
+                    "description": "%configuration.svn.sourceControl.ignore.description%",
+                    "default": [],
+                    "examples": [
+                        [
+                            "**/*.js",
+                            "*.jar",
+                            "/log",
+                            "/.vscode/*",
+                            "!/.vscode/settings.json"
+                        ]
+                    ]
+                },
+                "svn.sourceControl.ignoreOnCommit": {
+                    "type": "array",
+                    "description": "%configuration.svn.sourceControl.ignoreOnCommit.description%",
+                    "default": [
+                        "ignore-on-commit"
+                    ]
+                },
+                "svn.sourceControl.ignoreOnStatusCount": {
+                    "type": "array",
+                    "description": "%configuration.svn.sourceControl.ignoreOnStatusCount.description%",
+                    "default": [
+                        "ignore-on-commit"
+                    ]
+                },
+                "svn.update.ignoreExternals": {
+                    "type": "boolean",
+                    "description": "%configuration.svn.update.ignoreExternals.description%",
+                    "default": true
+                }
+            }
+        },
+        "resourceLabelFormatters": [
+            {
+                "scheme": "svn",
+                "formatting": {
+                    "label": "${path}${authority}",
+                    "separator": "/",
+                    "workspaceSuffix": "Subversion"
+                }
+            }
+        ]
+    }
+}

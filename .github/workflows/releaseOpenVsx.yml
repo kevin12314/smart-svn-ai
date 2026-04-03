@@ -1,0 +1,64 @@
+name: release Open VSX
+run-name: Open VSX package${{ github.event_name == 'workflow_dispatch' && inputs.publish && ' and publish' || '' }}
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the packaged VSIX to Open VSX
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+     - "v*"
+
+jobs:
+  build:
+   permissions:
+    contents: write
+   runs-on: ubuntu-latest
+   steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+
+    - name: Enable Corepack pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.17.0 --activate
+
+    - name: Fetch tags
+      run: git fetch --tags -f || true
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile --config.node-linker=hoisted
+
+    - name: Package Open VSX
+      run: pnpm run package:ovsx
+
+    - name: Publish Open VSX
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
+      env:
+        OVSX_TOKEN: ${{ secrets.ovsxToken }}
+      run: |
+        if [ -z "$OVSX_TOKEN" ]; then
+          echo "Missing Actions secret: ovsxToken"
+          exit 1
+        fi
+
+        pnpm exec ovsx publish smart-svn-ai-ovsx.vsix -p "$OVSX_TOKEN"
+
+    - name: Upload Open VSX to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ github.token }}
+        file: smart-svn-ai-ovsx.vsix
+        tag: ${{ github.ref_name }}
