@@ -2,10 +2,10 @@
 
 ![Visual Studio Marketplace Release Date](https://img.shields.io/visual-studio-marketplace/release-date/kevin12314.smart-svn-ai)
 ![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/kevin12314.smart-svn-ai)
-![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/kevin12314.smart-svn-ai?color=orange)
-![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/kevin12314.smart-svn-ai)
+![Visual Studio Marketplace Version](https://vsmarketplacebadges.dev/version-short/kevin12314.smart-svn-ai.svg?&colorB=orange)
+![Visual Studio Marketplace Rating](https://vsmarketplacebadges.dev/rating-star/kevin12314.smart-svn-ai.svg)
 
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/kevin12314/smart-svn-ai/main.yml?branch=master)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/kevin12314/smart-svn-ai/main.yml?branch=main)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 [![Known Vulnerabilities](https://snyk.io/test/github/kevin12314/smart-svn-ai/badge.svg)](https://snyk.io/test/github/kevin12314/smart-svn-ai)
