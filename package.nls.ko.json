@@ -19,6 +19,7 @@
     "commands.svn.commit.title": "선택 항목 커밋",
     "commands.svn.commitWithMessage.title": "변경 사항 커밋",
     "commands.svn.completeMerge.title": "병합 완료 후 해결됨으로 표시",
+    "commands.svn.createBranchTag.title": "브랜치/태그 만들기",
     "commands.svn.generateCommitMessage.title": "커밋 메시지 생성",
     "commands.svn.setOpenAICompatibleApiKey.title": "OpenAI 호환 API 키 설정",
     "commands.svn.clearOpenAICompatibleApiKey.title": "OpenAI 호환 API 키 지우기",

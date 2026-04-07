@@ -19,6 +19,7 @@
     "commands.svn.commit.title": "Commit Selected",
     "commands.svn.commitWithMessage.title": "Commit Changes",
     "commands.svn.completeMerge.title": "Complete Merge and Mark Resolved",
+    "commands.svn.createBranchTag.title": "Create Branch/Tag",
     "commands.svn.generateCommitMessage.title": "Generate Commit Message",
     "commands.svn.setOpenAICompatibleApiKey.title": "Set OpenAI-Compatible API Key",
     "commands.svn.clearOpenAICompatibleApiKey.title": "Clear OpenAI-Compatible API Key",

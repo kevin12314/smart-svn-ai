@@ -19,6 +19,7 @@
     "commands.svn.commit.title": "提交選取項目",
     "commands.svn.commitWithMessage.title": "提交變更",
     "commands.svn.completeMerge.title": "完成合併並標記為已解決",
+    "commands.svn.createBranchTag.title": "建立分支/標籤",
     "commands.svn.generateCommitMessage.title": "產生提交訊息",
     "commands.svn.setOpenAICompatibleApiKey.title": "設定 OpenAI 相容 API 金鑰",
     "commands.svn.clearOpenAICompatibleApiKey.title": "清除 OpenAI 相容 API 金鑰",

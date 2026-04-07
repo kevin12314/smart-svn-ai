@@ -23,7 +23,7 @@ suite("Repository Tests", () => {
   });
 
   suiteTeardown(() => {
-    sourceControlManager.openRepositories.forEach(repository =>
+    sourceControlManager?.openRepositories.forEach(repository =>
       repository.dispose()
     );
     testUtil.destroyAllTempPaths();

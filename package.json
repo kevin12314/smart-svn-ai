@@ -2,7 +2,7 @@
     "name": "smart-svn-ai",
     "displayName": "%extension.displayName%",
     "description": "%extension.description%",
-    "version": "3.5.1",
+    "version": "3.6.0",
     "publisher": "kevin12314",
     "engines": {
         "vscode": "^1.91.0"
@@ -51,7 +51,7 @@
         "semantic-release": "semantic-release",
         "style-check": "prettylint 'src/**/*.ts'",
         "style-fix": "prettier --write \"src/**/*.ts\"",
-        "test": "node ./out/test/runTest.js",
+        "test": "pnpm run build && pnpm run test-compile && node ./out/test/runTest.js",
         "test-compile": "tsc -p ./",
         "tools:genReadme": "node ./out/tools/generateConfigSectionForReadme.js",
         "vscode:prepublish": "pnpm run lint && pnpm run build",
@@ -213,6 +213,12 @@
                 "title": "%commands.svn.completeMerge.title%",
                 "category": "%commands.category.svn%",
                 "icon": "$(pass-filled)"
+            },
+            {
+                "command": "svn.createBranchTag",
+                "title": "%commands.svn.createBranchTag.title%",
+                "category": "%commands.category.svn%",
+                "icon": "$(plus)"
             },
             {
                 "command": "svn.generateCommitMessage",
@@ -565,6 +571,10 @@
                     "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
                 },
                 {
+                    "command": "svn.createBranchTag",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
                     "command": "svn.commit",
                     "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
                 },
@@ -901,6 +911,10 @@
                 {
                     "command": "svn.generateCommitMessage",
                     "group": "navigation",
+                    "when": "config.svn.enabled && scmProvider == svn"
+                },
+                {
+                    "command": "svn.createBranchTag",
                     "when": "config.svn.enabled && scmProvider == svn"
                 },
                 {

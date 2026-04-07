@@ -9,6 +9,7 @@ import { Close } from "./commands/close";
 import { Commit } from "./commands/commit";
 import { CommitWithMessage } from "./commands/commitWithMessage";
 import { CompleteMerge } from "./commands/completeMerge";
+import { CreateBranchTag } from "./commands/createBranchTag";
 import { GenerateCommitMessage } from "./commands/generateCommitMessage";
 import { DeleteUnversioned } from "./commands/deleteUnversioned";
 import { FileOpen } from "./commands/fileOpen";
@@ -83,6 +84,7 @@ export function registerCommands(
   disposables.push(new OpenResourceBase());
   disposables.push(new OpenResourceHead());
   disposables.push(new OpenChangeBase());
+  disposables.push(new CreateBranchTag());
   disposables.push(new SwitchBranch());
   disposables.push(new Merge());
   disposables.push(new Revert());

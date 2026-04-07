@@ -2,8 +2,6 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import * as testUtil from "./testUtil";
 
-const EXTENSION_ID = "kevin12314.smart-svn-ai";
-
 suite("Extension Tests", () => {
   setup(async () => {});
 
@@ -12,7 +10,7 @@ suite("Extension Tests", () => {
   });
 
   test("should be present", () => {
-    assert.ok(vscode.extensions.getExtension(EXTENSION_ID));
+    assert.ok(testUtil.getExtensionUnderTest());
   });
 
   // The extension is already activated by vscode before running mocha test framework.
@@ -20,9 +18,9 @@ suite("Extension Tests", () => {
   // tslint:disable-next-line: only-arrow-functions
   test("should be able to activate the extension", function (done) {
     this.timeout(60 * 1000);
-    const extension = vscode.extensions.getExtension(
-      EXTENSION_ID
-    ) as vscode.Extension<any>;
+    const extension = testUtil.getExtensionUnderTest() as
+      | vscode.Extension<any>
+      | undefined;
 
     if (!extension) {
       assert.fail("Extension not found");

@@ -50,6 +50,7 @@ Supported languages:
 
 ### 🛡️ Safety & Productivity Enhancements  
 - Confirmation prompts for revert and missing‑file commits  
+- Dedicated branch/tag creation from a repository path  
 - File locking and permalink commands  
 - Copy commit details and revision URLs  
 - Improved multi‑selection handling for changelists and commit views  
@@ -87,6 +88,45 @@ To use Azure OpenAI for commit message generation:
 
 ## 📦 Installation  
 Search for **Smart SVN AI** in the Visual Studio Code Marketplace.
+
+---
+
+## 🌿 Branch and Tag Workflow
+
+### Create Branch/Tag
+Use the `SVN: Create Branch/Tag` command when you want to create a new SVN copy target directly, without going through branch switching first.
+
+The command supports two ways to choose the destination path:
+- Enter the full repository-relative target path manually, for example `branches/my-feature` or `tags/v1.2.0`
+- Browse repository folders first, then enter the new branch/tag name under the selected parent path
+
+Typical flow:
+1. Run `SVN: Create Branch/Tag` from the Command Palette.
+2. Choose whether to type the target path directly or browse the repository.
+3. Enter the destination path or final folder name.
+4. Enter the copy commit message.
+5. Choose whether to switch the working copy to the new path after creation.
+
+Notes:
+- In SVN, branches and tags are both repository copies, so the command is path-oriented rather than asking you to choose a separate branch or tag mode first.
+- The new path is created by copying the current working copy branch/tag source, so the destination starts with the same repository contents.
+- If you choose not to switch after creation, your working copy stays on the current path.
+
+### Switch Branch
+Use `SVN: Switch Branch` only to move the current working copy to an existing repository path.
+
+The command now uses the same repository-folder browser style as `Create Branch/Tag`.
+
+Typical flow:
+1. Run `SVN: Switch Branch` from the Command Palette.
+2. Browse repository folders until you reach the target area.
+3. Choose `Use this folder` when the currently displayed repository path is the one you want to switch to.
+4. Choose a child folder to keep browsing deeper, or `..` to go back to the parent folder.
+
+Notes:
+- Switching is now repository-path-oriented, so you can switch to folders such as `servers/test`, `servers/prod`, `branches/release-1.0`, or any other valid SVN path in the same repository.
+- You no longer need the target path to match only `trunk`, `branches`, or `tags` layout rules before it can be selected.
+- It no longer contains a hidden branch/tag creation entry. Creation and switching are now documented and exposed as separate actions so the flow is explicit.
 
 ---
 

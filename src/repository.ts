@@ -834,8 +834,16 @@ export class Repository implements IRemoteRepository {
     name: string,
     commitMessage: string = "Created new branch"
   ) {
+    return this.copyTo(name, commitMessage, true);
+  }
+
+  public async copyTo(
+    path: string,
+    commitMessage: string,
+    switchAfterCreate: boolean = true
+  ) {
     return this.run(Operation.NewBranch, async () => {
-      await this.repository.newBranch(name, commitMessage);
+      await this.repository.copyTo(path, commitMessage, switchAfterCreate);
       this.updateRemoteChangedFiles();
     });
   }

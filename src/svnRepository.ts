@@ -561,7 +561,7 @@ export class Repository {
       }
     }
 
-    return "";
+    return info.relativeUrl.replace(/^\^\//, "").replace(/\/$/, "");
   }
 
   public async getRepositoryUuid(): Promise<string> {
@@ -659,14 +659,24 @@ export class Repository {
     name: string,
     commitMessage: string = "Created new branch"
   ) {
+    return this.copyTo(name, commitMessage, true);
+  }
+
+  public async copyTo(
+    targetPath: string,
+    commitMessage: string = "Created new branch",
+    switchAfterCreate: boolean = true
+  ) {
     const repoUrl = await this.getRepoUrl();
-    const newBranch = repoUrl + "/" + name;
+    const newBranch = repoUrl + "/" + targetPath;
     const info = await this.getInfo();
     const currentBranch = info.url;
 
     await this.exec(["copy", currentBranch, newBranch, "-m", commitMessage]);
 
-    await this.switchBranch(name);
+    if (switchAfterCreate) {
+      await this.switchBranch(targetPath);
+    }
 
     return true;
   }

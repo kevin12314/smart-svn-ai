@@ -31,8 +31,7 @@ function runSvn(
 
       reject(
         new Error(
-          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${
-            stderr ? `: ${stderr}` : ""
+          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${stderr ? `: ${stderr}` : ""
           }`
         )
       );
@@ -75,8 +74,7 @@ function runSvnCapture(args: string[], cwd: string): Promise<string> {
 
       reject(
         new Error(
-          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${
-            stderr ? `: ${stderr}` : ""
+          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${stderr ? `: ${stderr}` : ""
           }`
         )
       );
@@ -113,6 +111,35 @@ suite("Commands Tests", () => {
 
     repoUri = await testUtil.createRepoServer();
     await testUtil.createStandardLayout(testUtil.getSvnUrl(repoUri));
+    await runSvn(
+      [
+        "mkdir",
+        `${testUtil.getSvnUrl(repoUri)}/servers`,
+        "-m",
+        "Create servers root"
+      ],
+      path.dirname(repoUri.fsPath)
+    );
+    await runSvn(
+      [
+        "copy",
+        `${testUtil.getSvnUrl(repoUri)}/trunk`,
+        `${testUtil.getSvnUrl(repoUri)}/servers/test`,
+        "-m",
+        "Create test server path"
+      ],
+      path.dirname(repoUri.fsPath)
+    );
+    await runSvn(
+      [
+        "copy",
+        `${testUtil.getSvnUrl(repoUri)}/trunk`,
+        `${testUtil.getSvnUrl(repoUri)}/servers/prod`,
+        "-m",
+        "Create prod server path"
+      ],
+      path.dirname(repoUri.fsPath)
+    );
     checkoutDir = await testUtil.createRepoCheckout(
       testUtil.getSvnUrl(repoUri) + "/trunk"
     );
@@ -123,7 +150,7 @@ suite("Commands Tests", () => {
   });
 
   suiteTeardown(() => {
-    sourceControlManager.openRepositories.forEach(repository =>
+    sourceControlManager?.openRepositories.forEach(repository =>
       repository.dispose()
     );
     testUtil.destroyAllTempPaths();
@@ -143,15 +170,15 @@ suite("Commands Tests", () => {
     );
 
     await commands.executeCommand("svn.refresh");
-    assert.equal(repository.unversioned.resourceStates.length, 1);
-    assert.equal(repository.changes.resourceStates.length, 0);
+    assert.strictEqual(repository.unversioned.resourceStates.length, 1);
+    assert.strictEqual(repository.changes.resourceStates.length, 0);
 
     const resource = repository.unversioned.resourceStates[0];
 
     await commands.executeCommand("svn.add", resource);
 
-    assert.equal(repository.unversioned.resourceStates.length, 0);
-    assert.equal(repository.changes.resourceStates.length, 1);
+    assert.strictEqual(repository.unversioned.resourceStates.length, 0);
+    assert.strictEqual(repository.changes.resourceStates.length, 1);
   });
 
   test("Sanitize AI Commit Message Reasoning", function () {
@@ -286,7 +313,7 @@ suite("Commands Tests", () => {
       assert.ok(prompt.includes("Changed files:"));
       assert.ok(prompt.includes("Template fallback draft:"));
       assert.ok(prompt.includes("Unified diff (possibly truncated):"));
-      assert.equal(prompt.includes("你產生 SVN 提交訊息"), false);
+      assert.strictEqual(prompt.includes("你產生 SVN 提交訊息"), false);
     } finally {
       await config.update(
         "commitMessageGeneration.outputLanguage",
@@ -313,7 +340,7 @@ suite("Commands Tests", () => {
       diff: "@@ -1 +1 @@\n-old\n+new"
     });
 
-    assert.equal(messages.length, 2);
+    assert.strictEqual(messages.length, 2);
     assert.ok(messages[0].includes("You generate SVN commit messages."));
     assert.ok(
       messages[0].includes("Return only the final commit message text.")
@@ -483,7 +510,7 @@ suite("Commands Tests", () => {
     await commands.executeCommand("svn.refresh");
 
     const selection = repository.unversioned.resourceStates.slice(-2);
-    assert.equal(selection.length, 2);
+    assert.strictEqual(selection.length, 2);
 
     await commands.executeCommand("svn.openFile", selection[0], selection);
 
@@ -500,7 +527,7 @@ suite("Commands Tests", () => {
     );
 
     await commands.executeCommand("svn.refresh");
-    assert.equal(repository.changes.resourceStates.length, 1);
+    assert.strictEqual(repository.changes.resourceStates.length, 1);
 
     const resource = repository.changes.resourceStates[0];
 
@@ -551,7 +578,7 @@ suite("Commands Tests", () => {
     );
 
     await commands.executeCommand("svn.refresh");
-    assert.equal(repository.changes.resourceStates.length, 1);
+    assert.strictEqual(repository.changes.resourceStates.length, 1);
 
     const resource = repository.changes.resourceStates[0];
 
@@ -587,7 +614,7 @@ suite("Commands Tests", () => {
     await commands.executeCommand("svn.refresh");
 
     const selection = repository.changes.resourceStates.slice(-2);
-    assert.equal(selection.length, 2);
+    assert.strictEqual(selection.length, 2);
 
     testUtil.overrideNextShowQuickPick(0);
     testUtil.overrideNextShowInputBox("changelist-multi-test");
@@ -599,7 +626,7 @@ suite("Commands Tests", () => {
     ) as ISvnResourceGroup;
 
     assert.ok(group);
-    assert.equal(group.resourceStates.length, 2);
+    assert.strictEqual(group.resourceStates.length, 2);
   });
 
   test("Remove Changelist", async function () {
@@ -616,7 +643,7 @@ suite("Commands Tests", () => {
     testUtil.overrideNextShowQuickPick(3);
 
     await commands.executeCommand("svn.changelist", resource);
-    assert.equal(group.resourceStates.length, 0);
+    assert.strictEqual(group.resourceStates.length, 0);
   });
 
   test("Show Patch", async function () {
@@ -723,7 +750,7 @@ suite("Commands Tests", () => {
     const selection = repository.changes.resourceStates.filter(resource =>
       [file1, file2].includes(resource.resourceUri.fsPath)
     );
-    assert.equal(selection.length, 2);
+    assert.strictEqual(selection.length, 2);
 
     setTimeout(() => {
       commands.executeCommand(
@@ -776,7 +803,7 @@ suite("Commands Tests", () => {
         [folder, webXml, modifiedFile].includes(resource.resourceUri.fsPath)
     );
 
-    assert.equal(selectedResources.length, 3);
+    assert.strictEqual(selectedResources.length, 3);
 
     let capturedHtml = "";
     const originalCreateWebviewPanel = window.createWebviewPanel;
@@ -788,20 +815,20 @@ suite("Commands Tests", () => {
         html: "",
         asWebviewUri: (uri: Uri) => uri,
         postMessage: async () => true,
-        onDidReceiveMessage: () => ({ dispose() {} })
+        onDidReceiveMessage: () => ({ dispose() { } })
       };
 
       return {
         webview,
         onDidDispose: (listener: () => void) => {
           disposeCallbacks.push(listener);
-          return { dispose() {} };
+          return { dispose() { } };
         },
         dispose: () => {
           capturedHtml = webview.html;
           disposeCallbacks.splice(0).forEach(listener => listener());
         },
-        reveal: () => {}
+        reveal: () => { }
       };
     };
 
@@ -826,7 +853,7 @@ suite("Commands Tests", () => {
     const matches =
       capturedHtml.match(new RegExp(`<li>${escapedFolder}</li>`, "g")) ?? [];
 
-    assert.equal(matches.length, 1, capturedHtml);
+    assert.strictEqual(matches.length, 1, capturedHtml);
     assert.ok(capturedHtml.includes(`<li>${webXml}</li>`), capturedHtml);
     assert.ok(capturedHtml.includes(`<li>${modifiedFile}</li>`), capturedHtml);
   });
@@ -881,7 +908,7 @@ suite("Commands Tests", () => {
       await repository.status();
       await timeout(500);
 
-      assert.equal(
+      assert.strictEqual(
         repository.changes.resourceStates.some(
           resource => (resource as any).resourceUri.fsPath === folder
         ),
@@ -898,7 +925,7 @@ suite("Commands Tests", () => {
         deletedFromRemote = true;
       }
 
-      assert.equal(deletedFromRemote, true);
+      assert.strictEqual(deletedFromRemote, true);
     } finally {
       await config.update(
         "delete.actionForDeletedFiles",
@@ -908,26 +935,81 @@ suite("Commands Tests", () => {
     }
   });
 
-  test("New Branch", async function () {
-    testUtil.overrideNextShowQuickPick(0);
-    testUtil.overrideNextShowQuickPick(1);
-    testUtil.overrideNextShowInputBox("test");
-    testUtil.overrideNextShowInputBox("Created new branch test");
-    await commands.executeCommand("svn.switchBranch");
-
-    // Wait run updateRemoteChangedFiles
-    await timeout(2000);
+  test("Create Branch or Tag From Manual Target Path", async function () {
+    this.timeout(10000);
 
     const repository = await testUtil.getOrOpenRepository(
       sourceControlManager,
       checkoutDir
     );
-    assert.equal(await repository.getCurrentBranch(), "branches/test");
+    const sourceBranch = await repository.getCurrentBranch();
+    const suffix = Date.now().toString();
+    const targetPath = `branches/test-${suffix}`;
+
+    testUtil.overrideNextShowQuickPick(0);
+    testUtil.overrideNextShowInputBox(targetPath);
+    testUtil.overrideNextShowInputBox(`Created new branch ${suffix}`);
+    testUtil.overrideNextShowQuickPick(0);
+
+    await commands.executeCommand("svn.createBranchTag");
+
+    // Wait run updateRemoteChangedFiles
+    await timeout(2000);
+
+    assert.strictEqual(await repository.getCurrentBranch(), targetPath);
+
+    const repoUrl = await repository.repository.getRepoUrl();
+    const sourceList = await runSvnCapture(
+      ["ls", `${repoUrl}/${sourceBranch}`],
+      checkoutDir.fsPath
+    );
+    const remoteList = await runSvnCapture(
+      ["ls", `${repoUrl}/${targetPath}`],
+      checkoutDir.fsPath
+    );
+    assert.strictEqual(remoteList.trim(), sourceList.trim());
+  });
+
+  test("Create Branch or Tag Without Switching Working Copy", async function () {
+    this.timeout(10000);
+
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+    const previousBranch = await repository.getCurrentBranch();
+    const suffix = `${Date.now()}-tag`;
+    const targetPath = `tags/test-${suffix}`;
+
+    testUtil.overrideNextShowQuickPick(0);
+    testUtil.overrideNextShowInputBox(targetPath);
+    testUtil.overrideNextShowInputBox(`Created new tag ${suffix}`);
+    testUtil.overrideNextShowQuickPick(1);
+
+    await commands.executeCommand("svn.createBranchTag");
+
+    // Wait run updateRemoteChangedFiles
+    await timeout(2000);
+
+    assert.strictEqual(await repository.getCurrentBranch(), previousBranch);
+
+    const repoUrl = await repository.repository.getRepoUrl();
+    const sourceList = await runSvnCapture(
+      ["ls", `${repoUrl}/${previousBranch}`],
+      checkoutDir.fsPath
+    );
+    const remoteList = await runSvnCapture(
+      ["ls", `${repoUrl}/${targetPath}`],
+      checkoutDir.fsPath
+    );
+    assert.strictEqual(remoteList.trim(), sourceList.trim());
   });
 
   test("Switch Branch", async function () {
-    this.timeout(5000);
+    this.timeout(10000);
     testUtil.overrideNextShowQuickPick(2);
+    testUtil.overrideNextShowQuickPick(3);
+    testUtil.overrideNextShowQuickPick(1);
     await commands.executeCommand("svn.switchBranch");
 
     // Wait run updateRemoteChangedFiles
@@ -937,15 +1019,67 @@ suite("Commands Tests", () => {
       sourceControlManager,
       checkoutDir
     );
-    assert.equal(await repository.getCurrentBranch(), "trunk");
+    assert.strictEqual(await repository.getCurrentBranch(), "servers/test");
+
+    await repository.switchBranch("trunk");
+    await timeout(2000);
+    assert.strictEqual(await repository.getCurrentBranch(), "trunk");
   });
 
   test("Lock File", async function () {
-    const file = path.join(checkoutDir.fsPath, "new.txt");
-    const uri = Uri.file(file);
+    this.timeout(20000);
 
-    await commands.executeCommand("vscode.open", uri);
-    await commands.executeCommand("svn.lock");
+    const file = path.join(checkoutDir.fsPath, "test_lock.txt");
+    fs.writeFileSync(file, "lock test content");
+
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+
+    await commands.executeCommand("svn.refresh");
+    await timeout(200);
+
+    await repository.addFiles([file]);
+    await repository.status();
+    await timeout(200);
+
+    await repository.commitFiles("Add file for lock test", [file]);
+    await timeout(500);
+
+    await commands.executeCommand("vscode.open", Uri.file(file));
+    await timeout(500);
+
+    const errorMessages: string[] = [];
+    const infoMessages: string[] = [];
+    const originalShowErrorMessage = window.showErrorMessage;
+    const originalShowInformationMessage = window.showInformationMessage;
+
+    window.showErrorMessage = async (message: string, ..._items: any[]) => {
+      errorMessages.push(String(message));
+      return undefined;
+    };
+    window.showInformationMessage = async (
+      message: string,
+      ..._items: any[]
+    ) => {
+      infoMessages.push(String(message));
+      return undefined;
+    };
+
+    try {
+      await commands.executeCommand("svn.lock");
+      await timeout(200);
+    } finally {
+      window.showErrorMessage = originalShowErrorMessage;
+      window.showInformationMessage = originalShowInformationMessage;
+    }
+
+    assert.strictEqual(errorMessages.length, 0, errorMessages.join("; "));
+    assert.ok(
+      infoMessages.some(message => message.includes("Successfully locked")),
+      infoMessages.join("; ")
+    );
   });
 
   test("Lock Binary File from Active Tab", async function () {
@@ -1006,16 +1140,16 @@ suite("Commands Tests", () => {
     const originalShowErrorMessage = window.showErrorMessage;
     const originalShowInformationMessage = window.showInformationMessage;
 
-    window.showErrorMessage = async (message: string, ...items: any[]) => {
+    window.showErrorMessage = async (message: string, ..._items: any[]) => {
       errorMessages.push(String(message));
-      return originalShowErrorMessage(message, ...items);
+      return undefined;
     };
     window.showInformationMessage = async (
       message: string,
-      ...items: any[]
+      ..._items: any[]
     ) => {
       infoMessages.push(String(message));
-      return originalShowInformationMessage(message, ...items);
+      return undefined;
     };
 
     try {
@@ -1026,7 +1160,7 @@ suite("Commands Tests", () => {
       window.showInformationMessage = originalShowInformationMessage;
     }
 
-    assert.equal(errorMessages.length, 0, errorMessages.join("; "));
+    assert.strictEqual(errorMessages.length, 0, errorMessages.join("; "));
     assert.ok(
       infoMessages.some(message => message.includes("Successfully locked")),
       infoMessages.join("; ")

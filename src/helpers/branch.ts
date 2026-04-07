@@ -1,7 +1,6 @@
 import { l10n, ProgressLocation, window } from "vscode";
 import { IBranchItem, SvnKindType } from "../common/types";
 import FolderItem from "../quickPickItems/folderItem";
-import NewFolderItem from "../quickPickItems/newFolderItem";
 import ParentFolderItem from "../quickPickItems/parentFolderItem";
 import { Repository } from "../repository";
 import { configuration } from "./configuration";
@@ -36,7 +35,6 @@ export function getBranchName(folder: string): IBranchItem | undefined {
 
 export async function selectBranch(
   repository: Repository,
-  allowNew = false,
   folder?: string
 ): Promise<IBranchItem | undefined> {
   const promise = repository.repository.list(folder);
@@ -62,10 +60,6 @@ export async function selectBranch(
     picks.push(new ParentFolderItem(parent));
   }
 
-  if (allowNew && folder && !!getBranchName(`${folder}/test`)) {
-    picks.push(new NewFolderItem(folder));
-  }
-
   picks.push(...dirs.map(dir => new FolderItem(dir, folder)));
 
   const choice = await window.showQuickPick(picks);
@@ -75,37 +69,14 @@ export async function selectBranch(
   }
 
   if (choice instanceof ParentFolderItem) {
-    return selectBranch(repository, allowNew, choice.path);
+    return selectBranch(repository, choice.path);
   }
   if (choice instanceof FolderItem) {
     if (choice.branch) {
       return choice.branch;
     }
 
-    return selectBranch(repository, allowNew, choice.path);
-  }
-
-  if (choice instanceof NewFolderItem) {
-    const result = await window.showInputBox({
-      prompt: l10n.t("Please provide a branch name"),
-      ignoreFocusOut: true
-    });
-
-    if (!result) {
-      return;
-    }
-
-    const name = result.replace(
-      /^\.|\/\.|\.\.|~|\^|:|\/$|\.lock$|\.lock\/|\\|\*|\s|^\s*$|\.$/g,
-      "-"
-    );
-
-    const newBranch = getBranchName(`${folder}/${name}`);
-    if (newBranch) {
-      newBranch.isNew = true;
-    }
-
-    return newBranch;
+    return selectBranch(repository, choice.path);
   }
 
   return;

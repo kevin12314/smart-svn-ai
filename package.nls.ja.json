@@ -19,6 +19,7 @@
     "commands.svn.commit.title": "選択項目をコミット",
     "commands.svn.commitWithMessage.title": "変更をコミット",
     "commands.svn.completeMerge.title": "マージを完了して解決済みにする",
+    "commands.svn.createBranchTag.title": "ブランチ/タグを作成",
     "commands.svn.generateCommitMessage.title": "コミット メッセージを生成",
     "commands.svn.setOpenAICompatibleApiKey.title": "OpenAI 互換 API キーを設定",
     "commands.svn.clearOpenAICompatibleApiKey.title": "OpenAI 互換 API キーをクリア",

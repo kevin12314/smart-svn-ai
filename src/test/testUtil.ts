@@ -3,13 +3,59 @@ import { ChildProcess, SpawnOptions } from "child_process";
 import * as fs from "original-fs";
 import * as path from "path";
 import * as tmp from "tmp";
-import { extensions, Uri, window } from "vscode";
+import { Extension, extensions, Uri, window } from "vscode";
 import { Repository } from "../repository";
 import { SourceControlManager } from "../source_control_manager";
 import { timeout } from "../util";
 import { SvnExtensionApi } from "../extension";
 
-const EXTENSION_ID = "kevin12314.smart-svn-ai";
+type ExtensionPackageJson = {
+  name?: string;
+  publisher?: string;
+};
+
+let cachedExtensionId: string | undefined;
+
+function getExpectedExtensionId(): string {
+  if (cachedExtensionId) {
+    return cachedExtensionId;
+  }
+
+  const packageJsonPath = path.resolve(__dirname, "../../package.json");
+  const packageJson = JSON.parse(
+    fs.readFileSync(packageJsonPath, "utf8")
+  ) as ExtensionPackageJson;
+
+  if (!packageJson.name || !packageJson.publisher) {
+    throw new Error("Unable to resolve extension id from package.json");
+  }
+
+  cachedExtensionId = `${packageJson.publisher}.${packageJson.name}`;
+  return cachedExtensionId;
+}
+
+export function getExtensionUnderTest():
+  | Extension<SvnExtensionApi>
+  | undefined {
+  const extensionId = getExpectedExtensionId();
+  const exactMatch = extensions.getExtension<SvnExtensionApi>(extensionId);
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const extensionRoot = path.resolve(__dirname, "../..");
+
+  return extensions.all.find(extension => {
+    const packageJson = extension.packageJSON as ExtensionPackageJson;
+
+    return (
+      extension.extensionPath === extensionRoot ||
+      (packageJson.name === "smart-svn-ai" &&
+        packageJson.publisher === "kevin12314") ||
+      extension.id === extensionId
+    );
+  }) as Extension<SvnExtensionApi> | undefined;
+}
 
 tmp.setGracefulCleanup();
 
@@ -183,16 +229,25 @@ export function destroyAllTempPaths() {
 
 export function activeExtension() {
   return new Promise<void>((resolve, reject) => {
-    const extension = extensions.getExtension(EXTENSION_ID);
+    const extension = getExtensionUnderTest();
     if (!extension) {
-      reject();
+      reject(
+        new Error(
+          `Extension not found. Expected id: ${getExpectedExtensionId()}`
+        )
+      );
       return;
     }
 
     if (!extension.isActive) {
       extension.activate().then(
         async () => resolve(),
-        () => reject()
+        error =>
+          reject(
+            error instanceof Error
+              ? error
+              : new Error(`Failed to activate extension: ${String(error)}`)
+          )
       );
     } else {
       resolve();
@@ -201,12 +256,14 @@ export function activeExtension() {
 }
 
 export async function getSourceControlManager(): Promise<SourceControlManager> {
-  const extension = extensions.getExtension(EXTENSION_ID) as
+  const extension = getExtensionUnderTest() as
     | { isActive: boolean; activate(): Thenable<SvnExtensionApi> }
     | undefined;
 
   if (!extension) {
-    throw new Error("Extension not found");
+    throw new Error(
+      `Extension not found. Expected id: ${getExpectedExtensionId()}`
+    );
   }
 
   const api = extension.isActive
