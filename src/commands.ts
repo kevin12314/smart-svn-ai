@@ -45,6 +45,8 @@ import { RevertAll } from "./commands/revertAll";
 import { RevertChange } from "./commands/revertChange";
 import { RevertExplorer } from "./commands/revertExplorer";
 import { SwitchBranch } from "./commands/switchBranch";
+import { Unlock } from "./commands/unlock";
+import { UnlockLockedFiles } from "./commands/unlockLockedFiles";
 import { Update } from "./commands/update";
 import { Upgrade } from "./commands/upgrade";
 import { SourceControlManager } from "./source_control_manager";
@@ -99,6 +101,8 @@ export function registerCommands(
   disposables.push(new Resolved());
   disposables.push(new Log());
   disposables.push(new Lock());
+  disposables.push(new Unlock());
+  disposables.push(new UnlockLockedFiles());
   disposables.push(new RevertChange());
   disposables.push(new Close());
   disposables.push(new Cleanup());

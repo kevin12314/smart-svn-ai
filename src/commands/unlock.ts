@@ -2,17 +2,17 @@ import { l10n, Uri, window } from "vscode";
 import { isSvnErrorLike } from "../util";
 import { Command } from "./command";
 
-function canStealLock(error: unknown): boolean {
+function canForceUnlock(error: unknown): boolean {
   if (!isSvnErrorLike(error)) {
     return false;
   }
 
-  return /already locked by user/i.test(error.stderr || "");
+  return /(locked by user|lock token)/i.test(error.stderr || "");
 }
 
-export class Lock extends Command {
+export class Unlock extends Command {
   constructor() {
-    super("svn.lock");
+    super("svn.unlock");
   }
 
   public async execute(resourceUri?: Uri) {
@@ -28,7 +28,7 @@ export class Lock extends Command {
 
     if (uri.scheme !== "file") {
       window.showErrorMessage(
-        l10n.t("Can only lock files from the file system")
+        l10n.t("Can only unlock files from the file system")
       );
       return;
     }
@@ -37,40 +37,42 @@ export class Lock extends Command {
       const filePath = resource.fsPath;
 
       try {
-        await repository.lock([filePath]);
+        await repository.unlock([filePath]);
         window.showInformationMessage(
-          l10n.t("Successfully locked {0}", filePath)
+          l10n.t("Successfully unlocked {0}", filePath)
         );
       } catch (error) {
         console.log(error);
 
-        if (canStealLock(error)) {
-          const stealLock = l10n.t("Steal Lock");
+        if (canForceUnlock(error)) {
+          const forceUnlock = l10n.t("Force Unlock");
           const selection = await window.showWarningMessage(
             l10n.t(
-              "This file is already locked by another user. Do you want to steal the lock?"
+              "This file is locked by another user. Do you want to forcibly break the lock?"
             ),
-            stealLock
+            forceUnlock
           );
 
-          if (selection === stealLock) {
+          if (selection === forceUnlock) {
             try {
-              await repository.lock([filePath], "Locking for changes", true);
+              await repository.unlock([filePath], true);
               window.showInformationMessage(
-                l10n.t("Successfully locked {0}", filePath)
+                l10n.t("Successfully unlocked {0}", filePath)
               );
               return;
             } catch (forceError) {
               console.log(forceError);
               window.showErrorMessage(
-                l10n.t("Unable to lock file: {0}", `${forceError}`)
+                l10n.t("Unable to unlock file: {0}", `${forceError}`)
               );
               return;
             }
           }
         }
 
-        window.showErrorMessage(l10n.t("Unable to lock file: {0}", `${error}`));
+        window.showErrorMessage(
+          l10n.t("Unable to unlock file: {0}", `${error}`)
+        );
       }
     });
   }

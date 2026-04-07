@@ -37,6 +37,8 @@
     "commands.svn.itemlog.refresh.title": "刷新文件历史",
     "commands.svn.copyPermalink.title": "复制当前修订版的 URL",
     "commands.svn.lock.title": "锁定当前文件",
+    "commands.svn.unlock.title": "解除当前文件锁定",
+    "commands.svn.unlockLockedFiles.title": "解锁",
     "commands.svn.log.title": "显示提交消息",
     "commands.svn.merge.title": "合并",
     "commands.svn.openMergeEditor.title": "打开合并编辑器",

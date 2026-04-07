@@ -313,6 +313,16 @@
                 "category": "%commands.category.svn%"
             },
             {
+                "command": "svn.unlock",
+                "title": "%commands.svn.unlock.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
+                "command": "svn.unlockLockedFiles",
+                "title": "%commands.svn.unlockLockedFiles.title%",
+                "category": "%commands.category.svn%"
+            },
+            {
                 "command": "svn.merge",
                 "title": "%commands.svn.merge.title%",
                 "category": "%commands.category.svn%"
@@ -624,6 +634,14 @@
                 },
                 {
                     "command": "svn.lock",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.unlock",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "svn.unlockLockedFiles",
                     "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
                 },
                 {
@@ -1136,6 +1154,11 @@
                 },
                 {
                     "command": "svn.lock",
+                    "group": "7_modification",
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && !explorerResourceIsFolder && !inputFocus"
+                },
+                {
+                    "command": "svn.unlock",
                     "group": "7_modification",
                     "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && !explorerResourceIsFolder && !inputFocus"
                 },

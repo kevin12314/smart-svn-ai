@@ -37,6 +37,8 @@
     "commands.svn.itemlog.refresh.title": "Refresh log for item",
     "commands.svn.copyPermalink.title": "Copy URL at Current Revision",
     "commands.svn.lock.title": "Get lock for current file",
+    "commands.svn.unlock.title": "Unlock for current file",
+    "commands.svn.unlockLockedFiles.title": "Unlock locked files",
     "commands.svn.log.title": "Show commit messages",
     "commands.svn.merge.title": "Merge",
     "commands.svn.openMergeEditor.title": "Open Merge Editor",

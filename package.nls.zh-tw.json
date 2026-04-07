@@ -37,6 +37,8 @@
     "commands.svn.itemlog.refresh.title": "重新整理檔案歷程",
     "commands.svn.copyPermalink.title": "複製目前修訂版的 URL",
     "commands.svn.lock.title": "鎖定目前檔案",
+    "commands.svn.unlock.title": "解除目前檔案鎖定",
+    "commands.svn.unlockLockedFiles.title": "解除鎖定",
     "commands.svn.log.title": "顯示提交訊息",
     "commands.svn.merge.title": "合併",
     "commands.svn.openMergeEditor.title": "開啟合併編輯器",

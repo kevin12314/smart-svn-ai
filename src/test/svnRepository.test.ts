@@ -90,4 +90,74 @@ suite("Svn Repository Tests", () => {
 
     await repository.lock(["test.php"]);
   });
+
+  test("Test lock with force", async () => {
+    svn = new Svn(options);
+    const repository = await new Repository(
+      svn,
+      "/tmp",
+      "/tmp",
+      ConstructorPolicy.LateInit
+    );
+    repository.exec = async (args: string[], _options?: ICpOptions) => {
+      assert.equal(args[0], "lock");
+      assert.equal(args[1], "--force");
+      assert.equal(args[2], "-m");
+      assert.equal(args[3], "Locking for changes");
+      assert.equal(args[4].includes("test.php"), true);
+
+      return {
+        exitCode: 0,
+        stderr: "",
+        stdout: "'test.php' locked by user 'testuser'."
+      };
+    };
+
+    await repository.lock(["test.php"], "Locking for changes", true);
+  });
+
+  test("Test unlock", async () => {
+    svn = new Svn(options);
+    const repository = await new Repository(
+      svn,
+      "/tmp",
+      "/tmp",
+      ConstructorPolicy.LateInit
+    );
+    repository.exec = async (args: string[], _options?: ICpOptions) => {
+      assert.equal(args[0], "unlock");
+      assert.equal(args[1].includes("test.php"), true);
+
+      return {
+        exitCode: 0,
+        stderr: "",
+        stdout: "'test.php' unlocked."
+      };
+    };
+
+    await repository.unlock(["test.php"]);
+  });
+
+  test("Test unlock with force", async () => {
+    svn = new Svn(options);
+    const repository = await new Repository(
+      svn,
+      "/tmp",
+      "/tmp",
+      ConstructorPolicy.LateInit
+    );
+    repository.exec = async (args: string[], _options?: ICpOptions) => {
+      assert.equal(args[0], "unlock");
+      assert.equal(args[1], "--force");
+      assert.equal(args[2].includes("test.php"), true);
+
+      return {
+        exitCode: 0,
+        stderr: "",
+        stdout: "'test.php' unlocked."
+      };
+    };
+
+    await repository.unlock(["test.php"], true);
+  });
 });

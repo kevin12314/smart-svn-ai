@@ -989,14 +989,37 @@ export class Repository {
 
   public async lock(
     files: string[],
-    message: string = "Locking for changes"
+    message: string = "Locking for changes",
+    force: boolean = false
   ): Promise<string> {
-    const args = [
-      "lock",
+    const args = ["lock"];
+
+    if (force) {
+      args.push("--force");
+    }
+
+    args.push(
       "-m",
       message,
       ...files.map(file => this.removeAbsolutePath(file))
-    ];
+    );
+
+    const result = await this.exec(args);
+
+    return result.stdout;
+  }
+
+  public async unlock(
+    files: string[],
+    force: boolean = false
+  ): Promise<string> {
+    const args = ["unlock"];
+
+    if (force) {
+      args.push("--force");
+    }
+
+    args.push(...files.map(file => this.removeAbsolutePath(file)));
 
     const result = await this.exec(args);
 

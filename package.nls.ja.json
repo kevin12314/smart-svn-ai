@@ -37,6 +37,8 @@
     "commands.svn.itemlog.refresh.title": "ファイル履歴を更新",
     "commands.svn.copyPermalink.title": "現在のリビジョンの URL をコピー",
     "commands.svn.lock.title": "現在のファイルのロックを取得",
+    "commands.svn.unlock.title": "現在のファイルのロックを解除",
+    "commands.svn.unlockLockedFiles.title": "ロック解除",
     "commands.svn.log.title": "コミット メッセージを表示",
     "commands.svn.merge.title": "マージ",
     "commands.svn.openMergeEditor.title": "マージ エディターを開く",

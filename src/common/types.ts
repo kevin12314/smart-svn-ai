@@ -129,6 +129,7 @@ export enum Operation {
   Status = "Status",
   StatusRemote = "StatusRemote",
   SwitchBranch = "SwitchBranch",
+  Unlock = "Unlock",
   Update = "Update",
   List = "List"
 }

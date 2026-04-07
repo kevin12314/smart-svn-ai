@@ -37,6 +37,8 @@
     "commands.svn.itemlog.refresh.title": "파일 기록 새로 고침",
     "commands.svn.copyPermalink.title": "현재 리비전의 URL 복사",
     "commands.svn.lock.title": "현재 파일 잠금 획득",
+    "commands.svn.unlock.title": "현재 파일 잠금 해제",
+    "commands.svn.unlockLockedFiles.title": "잠금 해제",
     "commands.svn.log.title": "커밋 메시지 표시",
     "commands.svn.merge.title": "병합",
     "commands.svn.openMergeEditor.title": "병합 편집기 열기",

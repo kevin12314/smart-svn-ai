@@ -3,7 +3,7 @@ import * as fs from "original-fs";
 import * as path from "path";
 import { commands, Uri, window, workspace } from "vscode";
 import { __test__ as aiCommitMessageTest } from "../aiCommitMessageService";
-import { ISvnResourceGroup, Status } from "../common/types";
+import { IFileStatus, ISvnResourceGroup, Status } from "../common/types";
 import { Resource } from "../resource";
 import { SourceControlManager } from "../source_control_manager";
 import * as testUtil from "./testUtil";
@@ -31,7 +31,8 @@ function runSvn(
 
       reject(
         new Error(
-          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${stderr ? `: ${stderr}` : ""
+          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${
+            stderr ? `: ${stderr}` : ""
           }`
         )
       );
@@ -74,7 +75,8 @@ function runSvnCapture(args: string[], cwd: string): Promise<string> {
 
       reject(
         new Error(
-          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${stderr ? `: ${stderr}` : ""
+          `svn ${args.join(" ")} failed with exit code ${String(exitCode)}${
+            stderr ? `: ${stderr}` : ""
           }`
         )
       );
@@ -815,20 +817,20 @@ suite("Commands Tests", () => {
         html: "",
         asWebviewUri: (uri: Uri) => uri,
         postMessage: async () => true,
-        onDidReceiveMessage: () => ({ dispose() { } })
+        onDidReceiveMessage: () => ({ dispose() {} })
       };
 
       return {
         webview,
         onDidDispose: (listener: () => void) => {
           disposeCallbacks.push(listener);
-          return { dispose() { } };
+          return { dispose() {} };
         },
         dispose: () => {
           capturedHtml = webview.html;
           disposeCallbacks.splice(0).forEach(listener => listener());
         },
-        reveal: () => { }
+        reveal: () => {}
       };
     };
 
@@ -1163,6 +1165,160 @@ suite("Commands Tests", () => {
     assert.strictEqual(errorMessages.length, 0, errorMessages.join("; "));
     assert.ok(
       infoMessages.some(message => message.includes("Successfully locked")),
+      infoMessages.join("; ")
+    );
+  });
+
+  test("Unlock File from Active Tab", async function () {
+    this.timeout(20000);
+
+    const file = path.join(checkoutDir.fsPath, "test_unlock.txt");
+    fs.writeFileSync(file, "unlock me\n");
+
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+
+    await commands.executeCommand("svn.refresh");
+    await timeout(200);
+
+    await repository.addFiles([file]);
+    await repository.status();
+    await timeout(200);
+
+    await repository.commitFiles("Add file for unlock test", [file]);
+    await timeout(500);
+
+    await repository.lock([file]);
+    await timeout(500);
+
+    await commands.executeCommand("vscode.open", Uri.file(file));
+    await timeout(500);
+
+    const errorMessages: string[] = [];
+    const infoMessages: string[] = [];
+    const originalShowErrorMessage = window.showErrorMessage;
+    const originalShowInformationMessage = window.showInformationMessage;
+
+    window.showErrorMessage = async (message: string, ..._items: any[]) => {
+      errorMessages.push(String(message));
+      return undefined;
+    };
+    window.showInformationMessage = async (
+      message: string,
+      ..._items: any[]
+    ) => {
+      infoMessages.push(String(message));
+      return undefined;
+    };
+
+    try {
+      await commands.executeCommand("svn.unlock");
+      await timeout(200);
+    } finally {
+      window.showErrorMessage = originalShowErrorMessage;
+      window.showInformationMessage = originalShowInformationMessage;
+    }
+
+    assert.strictEqual(errorMessages.length, 0, errorMessages.join("; "));
+    assert.ok(
+      infoMessages.some(message => message.includes("Successfully unlocked")),
+      infoMessages.join("; ")
+    );
+  });
+
+  test("Unlock Selected Locked Files", async function () {
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+    const fileA = path.join(checkoutDir.fsPath, "batch-unlock-a.txt");
+    const fileB = path.join(checkoutDir.fsPath, "batch-unlock-b.txt");
+    const fakeStatuses: IFileStatus[] = [
+      {
+        path: "batch-unlock-a.txt",
+        status: Status.NORMAL,
+        props: Status.NONE,
+        wcStatus: { locked: true, switched: false }
+      },
+      {
+        path: "batch-unlock-b.txt",
+        status: Status.NORMAL,
+        props: Status.NONE,
+        wcStatus: { locked: true, switched: false }
+      }
+    ];
+    const unlockCalls: Array<{ file: string; force: boolean }> = [];
+    const getStatusCalls: any[] = [];
+    const originalGetStatus = repository.repository.getStatus.bind(
+      repository.repository
+    );
+    const originalUnlock = repository.unlock.bind(repository);
+    const infoMessages: string[] = [];
+    const errorMessages: string[] = [];
+    const originalShowInformationMessage = window.showInformationMessage;
+    const originalShowErrorMessage = window.showErrorMessage;
+
+    repository.repository.getStatus = async params => {
+      getStatusCalls.push(params);
+      return fakeStatuses;
+    };
+    repository.unlock = async (files: string[], force: boolean = false) => {
+      unlockCalls.push({ file: files[0], force });
+
+      if (files[0] === fileB && !force) {
+        throw {
+          stderr: "locked by user 'other-user'",
+          stderrFormated: "locked by user 'other-user'"
+        };
+      }
+
+      return "ok";
+    };
+
+    window.showInformationMessage = async (
+      message: string,
+      ..._items: any[]
+    ) => {
+      infoMessages.push(String(message));
+      return undefined;
+    };
+    window.showErrorMessage = async (message: string, ..._items: any[]) => {
+      errorMessages.push(String(message));
+      return undefined;
+    };
+
+    testUtil.overrideNextShowQuickPick([0, 1]);
+    testUtil.overrideNextShowWarningMessage("Force Unlock");
+
+    try {
+      await commands.executeCommand("svn.unlockLockedFiles", repository);
+      await timeout(50);
+    } finally {
+      repository.repository.getStatus = originalGetStatus;
+      repository.unlock = originalUnlock;
+      window.showInformationMessage = originalShowInformationMessage;
+      window.showErrorMessage = originalShowErrorMessage;
+    }
+
+    assert.deepStrictEqual(unlockCalls, [
+      { file: fileA, force: false },
+      { file: fileB, force: false },
+      { file: fileB, force: true }
+    ]);
+    assert.deepStrictEqual(getStatusCalls, [
+      {
+        includeIgnored: false,
+        includeExternals: false,
+        checkRemoteChanges: true
+      }
+    ]);
+    assert.strictEqual(errorMessages.length, 0, errorMessages.join("; "));
+    assert.ok(
+      infoMessages.some(message =>
+        message.includes("Successfully unlocked 2 file(s)")
+      ),
       infoMessages.join("; ")
     );
   });
