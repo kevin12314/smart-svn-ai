@@ -1084,6 +1084,94 @@ suite("Commands Tests", () => {
     );
   });
 
+  test("Lock Multiple Files From Explorer Selection", async function () {
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+    const fileA = path.join(checkoutDir.fsPath, "multi-lock-a.txt");
+    const fileB = path.join(checkoutDir.fsPath, "multi-lock-b.txt");
+    const lockCalls: string[][] = [];
+    const originalLock = repository.lock.bind(repository);
+    const originalShowInformationMessage = window.showInformationMessage;
+    const infoMessages: string[] = [];
+
+    fs.writeFileSync(fileA, "a");
+    fs.writeFileSync(fileB, "b");
+
+    repository.lock = async (files: string[]) => {
+      lockCalls.push(files);
+      return "locked";
+    };
+    window.showInformationMessage = async (message: string) => {
+      infoMessages.push(String(message));
+      return undefined;
+    };
+
+    try {
+      await commands.executeCommand("svn.lock", Uri.file(fileA), [
+        Uri.file(fileA),
+        Uri.file(fileB)
+      ]);
+      await timeout(50);
+    } finally {
+      repository.lock = originalLock;
+      window.showInformationMessage = originalShowInformationMessage;
+    }
+
+    assert.deepStrictEqual(lockCalls, [[fileA, fileB]]);
+    assert.ok(
+      infoMessages.some(message =>
+        message.includes("Successfully locked 2 file(s)")
+      ),
+      infoMessages.join("; ")
+    );
+  });
+
+  test("Lock Multiple Files Failure Uses Localized Summary", async function () {
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+    const fileA = path.join(checkoutDir.fsPath, "multi-lock-fail-a.txt");
+    const fileB = path.join(checkoutDir.fsPath, "multi-lock-fail-b.txt");
+    const originalLock = repository.lock.bind(repository);
+    const originalShowErrorMessage = window.showErrorMessage;
+    const errorMessages: string[] = [];
+
+    fs.writeFileSync(fileA, "a");
+    fs.writeFileSync(fileB, "b");
+
+    repository.lock = async () => {
+      throw {
+        stderr: "svn raw stderr",
+        stderrFormated: "formatted lock failure"
+      };
+    };
+    window.showErrorMessage = async (message: string) => {
+      errorMessages.push(String(message));
+      return undefined;
+    };
+
+    try {
+      await commands.executeCommand("svn.lock", Uri.file(fileA), [
+        Uri.file(fileA),
+        Uri.file(fileB)
+      ]);
+      await timeout(50);
+    } finally {
+      repository.lock = originalLock;
+      window.showErrorMessage = originalShowErrorMessage;
+    }
+
+    assert.ok(
+      errorMessages.some(message =>
+        message.includes("Failed to lock 2 file(s): formatted lock failure")
+      ),
+      errorMessages.join("; ")
+    );
+  });
+
   test("Lock Binary File from Active Tab", async function () {
     this.timeout(20000);
 
@@ -1225,6 +1313,98 @@ suite("Commands Tests", () => {
     assert.ok(
       infoMessages.some(message => message.includes("Successfully unlocked")),
       infoMessages.join("; ")
+    );
+  });
+
+  test("Unlock Multiple Files From Explorer Selection", async function () {
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+    const fileA = path.join(checkoutDir.fsPath, "multi-unlock-a.txt");
+    const fileB = path.join(checkoutDir.fsPath, "multi-unlock-b.txt");
+    const unlockCalls: Array<{ files: string[]; force: boolean }> = [];
+    const originalUnlock = repository.unlock.bind(repository);
+    const originalShowInformationMessage = window.showInformationMessage;
+    const infoMessages: string[] = [];
+
+    fs.writeFileSync(fileA, "a");
+    fs.writeFileSync(fileB, "b");
+
+    repository.unlock = async (files: string[], force: boolean = false) => {
+      unlockCalls.push({ files, force });
+      return "unlocked";
+    };
+    window.showInformationMessage = async (message: string) => {
+      infoMessages.push(String(message));
+      return undefined;
+    };
+
+    try {
+      await commands.executeCommand("svn.unlock", Uri.file(fileA), [
+        Uri.file(fileA),
+        Uri.file(fileB)
+      ]);
+      await timeout(50);
+    } finally {
+      repository.unlock = originalUnlock;
+      window.showInformationMessage = originalShowInformationMessage;
+    }
+
+    assert.deepStrictEqual(unlockCalls, [
+      { files: [fileA, fileB], force: false }
+    ]);
+    assert.ok(
+      infoMessages.some(message =>
+        message.includes("Successfully unlocked 2 file(s)")
+      ),
+      infoMessages.join("; ")
+    );
+  });
+
+  test("Unlock Multiple Files Failure Uses Localized Summary", async function () {
+    const repository = await testUtil.getOrOpenRepository(
+      sourceControlManager,
+      checkoutDir
+    );
+    const fileA = path.join(checkoutDir.fsPath, "multi-unlock-fail-a.txt");
+    const fileB = path.join(checkoutDir.fsPath, "multi-unlock-fail-b.txt");
+    const originalUnlock = repository.unlock.bind(repository);
+    const originalShowErrorMessage = window.showErrorMessage;
+    const errorMessages: string[] = [];
+
+    fs.writeFileSync(fileA, "a");
+    fs.writeFileSync(fileB, "b");
+
+    repository.unlock = async () => {
+      throw {
+        stderr: "svn raw stderr",
+        stderrFormated: "formatted unlock failure"
+      };
+    };
+    window.showErrorMessage = async (message: string) => {
+      errorMessages.push(String(message));
+      return undefined;
+    };
+
+    try {
+      await commands.executeCommand("svn.unlock", Uri.file(fileA), [
+        Uri.file(fileA),
+        Uri.file(fileB)
+      ]);
+      await timeout(50);
+    } finally {
+      repository.unlock = originalUnlock;
+      window.showErrorMessage = originalShowErrorMessage;
+    }
+
+    assert.ok(
+      errorMessages.some(message =>
+        message.includes(
+          "Failed to unlock 2 file(s): formatted unlock failure"
+        )
+      ),
+      errorMessages.join("; ")
     );
   });
 

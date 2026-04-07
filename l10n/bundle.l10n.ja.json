@@ -218,6 +218,8 @@
   "Set filter for commit authors, empty to reset": "コミット作成者のフィルターを設定します。空欄でリセットします",
   "Set filter for commit message, empty to reset": "コミット メッセージのフィルターを設定します。空欄でリセットします",
   "Successfully locked {0}": "{0} を正常にロックしました",
+  "Successfully locked {0} file(s)": "{0} 個のファイルのロックに成功しました",
+  "Failed to lock {0} file(s): {1}": "{0} 個のファイルのロックに失敗しました: {1}",
   "Unable to lock file: {0}": "ファイルをロックできません: {0}",
   "Steal Lock": "ロックを強制取得",
   "This file is already locked by another user. Do you want to steal the lock?": "このファイルは他のユーザーによって既にロックされています。ロックを強制取得しますか?",

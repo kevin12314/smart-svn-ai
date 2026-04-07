@@ -218,6 +218,8 @@
   "Set filter for commit authors, empty to reset": "Set filter for commit authors, empty to reset",
   "Set filter for commit message, empty to reset": "Set filter for commit message, empty to reset",
   "Successfully locked {0}": "Successfully locked {0}",
+  "Successfully locked {0} file(s)": "Successfully locked {0} file(s)",
+  "Failed to lock {0} file(s): {1}": "Failed to lock {0} file(s): {1}",
   "Unable to lock file: {0}": "Unable to lock file: {0}",
   "Steal Lock": "Steal Lock",
   "This file is already locked by another user. Do you want to steal the lock?": "This file is already locked by another user. Do you want to steal the lock?",

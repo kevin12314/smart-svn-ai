@@ -218,6 +218,8 @@
   "Set filter for commit authors, empty to reset": "设置提交作者筛选，留空可重置",
   "Set filter for commit message, empty to reset": "设置提交消息筛选，留空可重置",
   "Successfully locked {0}": "已成功锁定 {0}",
+  "Successfully locked {0} file(s)": "已成功锁定 {0} 个文件",
+  "Failed to lock {0} file(s): {1}": "有 {0} 个文件锁定失败：{1}",
   "Unable to lock file: {0}": "无法锁定文件：{0}",
   "Steal Lock": "强制接管锁定",
   "This file is already locked by another user. Do you want to steal the lock?": "此文件已被其他用户锁定。要强制接管锁定吗？",

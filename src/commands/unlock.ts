@@ -10,41 +10,94 @@ function canForceUnlock(error: unknown): boolean {
   return /(locked by user|lock token)/i.test(error.stderr || "");
 }
 
+function getErrorMessage(error: unknown): string {
+  if (isSvnErrorLike(error)) {
+    if (error.stderrFormated) {
+      return error.stderrFormated;
+    }
+
+    if (error.stderr) {
+      return error.stderr;
+    }
+  }
+
+  return String(error);
+}
+
 export class Unlock extends Command {
   constructor() {
     super("svn.unlock");
   }
 
-  public async execute(resourceUri?: Uri) {
-    const uri =
-      resourceUri ||
-      this.getUriFromActiveTab() ||
-      window.activeTextEditor?.document.uri;
+  private getUrisFromArgs(args: unknown[]): Uri[] {
+    const normalizedResourceStates = this.normalizeResourceStates(args);
 
-    if (!uri) {
+    if (normalizedResourceStates.length > 0) {
+      return normalizedResourceStates.map(resource => resource.resourceUri);
+    }
+
+    const seenUris = new Map<string, Uri>();
+    const uriArgs = args.flatMap(arg => (Array.isArray(arg) ? arg : [arg]));
+
+    for (const candidate of uriArgs) {
+      if (!(candidate instanceof Uri)) {
+        continue;
+      }
+
+      seenUris.set(candidate.toString(), candidate);
+    }
+
+    return Array.from(seenUris.values());
+  }
+
+  public async execute(...args: unknown[]) {
+    const uris = this.getUrisFromArgs(args);
+
+    if (uris.length === 0) {
+      const uri = this.getUriFromActiveTab() || window.activeTextEditor?.document.uri;
+
+      if (uri) {
+        uris.push(uri);
+      }
+    }
+
+    if (uris.length === 0) {
       window.showErrorMessage(l10n.t("No file is currently open"));
       return;
     }
 
-    if (uri.scheme !== "file") {
+    if (uris.some(uri => uri.scheme !== "file")) {
       window.showErrorMessage(
         l10n.t("Can only unlock files from the file system")
       );
       return;
     }
 
-    await this.runByRepository(uri, async (repository, resource) => {
-      const filePath = resource.fsPath;
+    await this.runByRepository(uris, async (repository, resources) => {
+      const filePaths = resources.map(resource => resource.fsPath);
 
       try {
-        await repository.unlock([filePath]);
+        await repository.unlock(filePaths);
         window.showInformationMessage(
-          l10n.t("Successfully unlocked {0}", filePath)
+          filePaths.length === 1
+            ? l10n.t("Successfully unlocked {0}", filePaths[0])
+            : l10n.t("Successfully unlocked {0} file(s)", filePaths.length)
         );
       } catch (error) {
         console.log(error);
 
-        if (canForceUnlock(error)) {
+        if (filePaths.length > 1) {
+          window.showErrorMessage(
+            l10n.t(
+              "Failed to unlock {0} file(s): {1}",
+              filePaths.length,
+              getErrorMessage(error)
+            )
+          );
+          return;
+        }
+
+        if (filePaths.length === 1 && canForceUnlock(error)) {
           const forceUnlock = l10n.t("Force Unlock");
           const selection = await window.showWarningMessage(
             l10n.t(
@@ -55,9 +108,9 @@ export class Unlock extends Command {
 
           if (selection === forceUnlock) {
             try {
-              await repository.unlock([filePath], true);
+              await repository.unlock(filePaths, true);
               window.showInformationMessage(
-                l10n.t("Successfully unlocked {0}", filePath)
+                l10n.t("Successfully unlocked {0}", filePaths[0])
               );
               return;
             } catch (forceError) {

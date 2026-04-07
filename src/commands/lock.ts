@@ -10,41 +10,95 @@ function canStealLock(error: unknown): boolean {
   return /already locked by user/i.test(error.stderr || "");
 }
 
+function getErrorMessage(error: unknown): string {
+  if (isSvnErrorLike(error)) {
+    if (error.stderrFormated) {
+      return error.stderrFormated;
+    }
+
+    if (error.stderr) {
+      return error.stderr;
+    }
+  }
+
+  return String(error);
+}
+
 export class Lock extends Command {
   constructor() {
     super("svn.lock");
   }
 
-  public async execute(resourceUri?: Uri) {
-    const uri =
-      resourceUri ||
-      this.getUriFromActiveTab() ||
-      window.activeTextEditor?.document.uri;
+  private getUrisFromArgs(args: unknown[]): Uri[] {
+    const normalizedResourceStates = this.normalizeResourceStates(args);
 
-    if (!uri) {
+    if (normalizedResourceStates.length > 0) {
+      return normalizedResourceStates.map(resource => resource.resourceUri);
+    }
+
+    const seenUris = new Map<string, Uri>();
+    const uriArgs = args.flatMap(arg => (Array.isArray(arg) ? arg : [arg]));
+
+    for (const candidate of uriArgs) {
+      if (!(candidate instanceof Uri)) {
+        continue;
+      }
+
+      seenUris.set(candidate.toString(), candidate);
+    }
+
+    return Array.from(seenUris.values());
+  }
+
+  public async execute(...args: unknown[]) {
+    const uris = this.getUrisFromArgs(args);
+
+    if (uris.length === 0) {
+      const uri =
+        this.getUriFromActiveTab() || window.activeTextEditor?.document.uri;
+
+      if (uri) {
+        uris.push(uri);
+      }
+    }
+
+    if (uris.length === 0) {
       window.showErrorMessage(l10n.t("No file is currently open"));
       return;
     }
 
-    if (uri.scheme !== "file") {
+    if (uris.some(uri => uri.scheme !== "file")) {
       window.showErrorMessage(
         l10n.t("Can only lock files from the file system")
       );
       return;
     }
 
-    await this.runByRepository(uri, async (repository, resource) => {
-      const filePath = resource.fsPath;
+    await this.runByRepository(uris, async (repository, resources) => {
+      const filePaths = resources.map(resource => resource.fsPath);
 
       try {
-        await repository.lock([filePath]);
+        await repository.lock(filePaths);
         window.showInformationMessage(
-          l10n.t("Successfully locked {0}", filePath)
+          filePaths.length === 1
+            ? l10n.t("Successfully locked {0}", filePaths[0])
+            : l10n.t("Successfully locked {0} file(s)", filePaths.length)
         );
       } catch (error) {
         console.log(error);
 
-        if (canStealLock(error)) {
+        if (filePaths.length > 1) {
+          window.showErrorMessage(
+            l10n.t(
+              "Failed to lock {0} file(s): {1}",
+              filePaths.length,
+              getErrorMessage(error)
+            )
+          );
+          return;
+        }
+
+        if (filePaths.length === 1 && canStealLock(error)) {
           const stealLock = l10n.t("Steal Lock");
           const selection = await window.showWarningMessage(
             l10n.t(
@@ -55,9 +109,9 @@ export class Lock extends Command {
 
           if (selection === stealLock) {
             try {
-              await repository.lock([filePath], "Locking for changes", true);
+              await repository.lock(filePaths, "Locking for changes", true);
               window.showInformationMessage(
-                l10n.t("Successfully locked {0}", filePath)
+                l10n.t("Successfully locked {0}", filePaths[0])
               );
               return;
             } catch (forceError) {

@@ -51,10 +51,15 @@ Supported languages:
 ### 🛡️ Safety & Productivity Enhancements  
 - Confirmation prompts for revert and missing‑file commits  
 - Dedicated branch/tag creation from a repository path  
-- File locking and permalink commands  
+- File locking, unlock, and batch unlock commands  
 - Copy commit details and revision URLs  
 - Improved multi‑selection handling for changelists and commit views  
 - Better resource refresh logic to avoid stale updates  
+
+---
+
+## 📦 Installation  
+Search for **Smart SVN AI** in the Visual Studio Code Marketplace.
 
 ---
 
@@ -86,8 +91,25 @@ To use Azure OpenAI for commit message generation:
 
 ---
 
-## 📦 Installation  
-Search for **Smart SVN AI** in the Visual Studio Code Marketplace.
+## 🔐 SVN Locking Workflows
+The extension now supports both single-file and batch lock management from the Command Palette and Explorer menus.
+
+Available commands:
+- `SVN: Get lock for current file`
+- `SVN: Release lock for current file`
+- `SVN: Unlock locked files`
+
+Batch unlock flow:
+1. Run `SVN: Unlock locked files`.
+2. The extension queries SVN status with remote lock information.
+3. Choose one or more locked files from the picker.
+4. The extension unlocks each selected file.
+
+If a file is locked by another user, the extension can prompt to use a force operation:
+- `svn lock --force` to steal a lock
+- `svn unlock --force` to break a lock
+
+This helps when the working copy does not own the lock token locally, or when a teammate's stale lock needs to be cleared intentionally.
 
 ---
 
