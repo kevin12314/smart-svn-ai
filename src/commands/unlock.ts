@@ -54,7 +54,8 @@ export class Unlock extends Command {
     const uris = this.getUrisFromArgs(args);
 
     if (uris.length === 0) {
-      const uri = this.getUriFromActiveTab() || window.activeTextEditor?.document.uri;
+      const uri =
+        this.getUriFromActiveTab() || window.activeTextEditor?.document.uri;
 
       if (uri) {
         uris.push(uri);

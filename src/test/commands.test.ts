@@ -1400,9 +1400,7 @@ suite("Commands Tests", () => {
 
     assert.ok(
       errorMessages.some(message =>
-        message.includes(
-          "Failed to unlock 2 file(s): formatted unlock failure"
-        )
+        message.includes("Failed to unlock 2 file(s): formatted unlock failure")
       ),
       errorMessages.join("; ")
     );
