@@ -165,32 +165,57 @@ export abstract class Command implements Disposable {
     const normalizedStates: SourceControlResourceState[] = [];
     const seenPaths = new Set<string>();
 
-    for (const state of resourceStates) {
-      const candidates = Array.isArray(state) ? state : [state];
-
-      for (const candidate of candidates) {
-        if (
-          !candidate ||
-          typeof candidate !== "object" ||
-          !("resourceUri" in candidate)
-        ) {
-          continue;
-        }
-
-        const resourceState = candidate as SourceControlResourceState;
-
-        if (!(resourceState.resourceUri instanceof Uri)) {
-          continue;
-        }
-
-        const key = resourceState.resourceUri.toString();
-        if (seenPaths.has(key)) {
-          continue;
-        }
-
-        seenPaths.add(key);
-        normalizedStates.push(resourceState);
+    const addResourceState = (candidate: unknown) => {
+      if (
+        !candidate ||
+        typeof candidate !== "object" ||
+        !("resourceUri" in candidate)
+      ) {
+        return;
       }
+
+      const resourceState = candidate as SourceControlResourceState;
+
+      if (!(resourceState.resourceUri instanceof Uri)) {
+        return;
+      }
+
+      const key = resourceState.resourceUri.toString();
+      if (seenPaths.has(key)) {
+        return;
+      }
+
+      seenPaths.add(key);
+      normalizedStates.push(resourceState);
+    };
+
+    const visit = (state: unknown) => {
+      if (Array.isArray(state)) {
+        state.forEach(visit);
+        return;
+      }
+
+      if (!state || typeof state !== "object") {
+        return;
+      }
+
+      addResourceState(state);
+
+      const container = state as {
+        resourceState?: unknown;
+        resourceStates?: unknown;
+        selectedResourceStates?: unknown;
+        selectedResources?: unknown;
+      };
+
+      visit(container.resourceState);
+      visit(container.resourceStates);
+      visit(container.selectedResourceStates);
+      visit(container.selectedResources);
+    };
+
+    for (const state of resourceStates) {
+      visit(state);
     }
 
     return normalizedStates;
