@@ -1,3 +1,15 @@
+# 3.6.1 (2026-07-26)
+
+
+### Bug Fixes
+
+* keep SCM resource command arguments stable across status refreshes so multi-selected commit actions do not resolve to stale resource handles
+* stop SCM commands with stale resource arguments from silently falling back to the active editor
+
+### Maintenance
+
+* add regression coverage for stable SCM command arguments and stale resource handling
+
 # 3.5.1 (2026-04-02)
 
 

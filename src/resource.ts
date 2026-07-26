@@ -101,7 +101,7 @@ export class Resource implements SourceControlResourceState {
       return {
         command: "svn.openMergeEditor",
         title: l10n.t("Open Merge Editor"),
-        arguments: [this]
+        arguments: [this.resourceUri]
       };
     }
 
@@ -109,7 +109,7 @@ export class Resource implements SourceControlResourceState {
       return {
         command: "svn.openFile",
         title: l10n.t("Open file"),
-        arguments: [this]
+        arguments: [this.resourceUri]
       };
     }
 
@@ -117,15 +117,25 @@ export class Resource implements SourceControlResourceState {
       return {
         command: "svn.openResourceHead",
         title: l10n.t("Open Diff With Head"),
-        arguments: [this]
+        arguments: this.commandArguments
       };
     }
 
     return {
       command: "svn.openResourceBase",
       title: l10n.t("Open Diff With Base"),
-      arguments: [this]
+      arguments: this.commandArguments
     };
+  }
+
+  private get commandArguments(): unknown[] {
+    return [
+      this.resourceUri,
+      this.type,
+      this.renameResourceUri,
+      this.props,
+      this.remote
+    ];
   }
 
   private getIconPath(theme: string): Uri | undefined {

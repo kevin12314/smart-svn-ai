@@ -145,6 +145,13 @@ export abstract class Command implements Disposable {
     );
 
     if (normalizedResourceStates.length === 0) {
+      // SCM menu arguments can become undefined if VS Code executes an action
+      // with a stale resource handle. Do not mistake that for a command invoked
+      // without arguments and silently operate on the active editor instead.
+      if (resourceStates.length > 0) {
+        return [];
+      }
+
       const resource = await this.getSCMResource();
 
       if (!resource) {
