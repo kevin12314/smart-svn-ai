@@ -55,10 +55,10 @@ export class GenerateCommitMessage extends Command {
         {
           location: ProgressLocation.Notification,
           title: l10n.t("Generating commit message"),
-          cancellable: false
+          cancellable: true
         },
-        async () =>
-          generateAICommitMessage(repository, resources, fallbackMessage)
+        async (_progress, token) =>
+          generateAICommitMessage(repository, resources, fallbackMessage, token)
       );
 
       if (aiResult.message) {
@@ -67,6 +67,12 @@ export class GenerateCommitMessage extends Command {
           l10n.t("AI commit message generated."),
           3000
         );
+      } else if (aiResult.reason === "cancelled") {
+        window.setStatusBarMessage(
+          l10n.t("Commit message generation cancelled."),
+          3000
+        );
+        return;
       } else if (mode === "ai") {
         const useTemplate = l10n.t("Use Template");
         const selection = await window.showWarningMessage(
@@ -78,6 +84,16 @@ export class GenerateCommitMessage extends Command {
             ? l10n.t("OpenAI-compatible API key is not configured.")
             : aiResult.reason === "http-error"
             ? l10n.t("OpenAI-compatible API request failed.")
+            : aiResult.reason === "cli-not-found"
+            ? l10n.t(
+                "Claude Code CLI was not found. Install Claude Code or configure its executable path."
+              )
+            : aiResult.reason === "codex-cli-not-found"
+            ? l10n.t(
+                "Codex CLI was not found. Install Codex or configure its executable path."
+              )
+            : aiResult.reason === "timeout"
+            ? l10n.t("AI commit message generation timed out.")
             : l10n.t("AI commit message generation failed."),
           useTemplate
         );
@@ -102,6 +118,14 @@ export class GenerateCommitMessage extends Command {
             ? l10n.t(
                 "AI provider API request failed, used template commit message."
               )
+            : aiResult.reason === "cli-not-found"
+            ? l10n.t(
+                "Claude Code CLI was not found, used template commit message."
+              )
+            : aiResult.reason === "codex-cli-not-found"
+            ? l10n.t("Codex CLI was not found, used template commit message.")
+            : aiResult.reason === "timeout"
+            ? l10n.t("AI generation timed out, used template commit message.")
             : l10n.t("AI generation failed, used template commit message."),
           3000
         );

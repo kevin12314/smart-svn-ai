@@ -235,5 +235,12 @@
   "This file is locked by another user. Do you want to forcibly break the lock?": "This file is locked by another user. Do you want to forcibly break the lock?",
   "Continue": "Continue",
   "The following missing file(s) or folder(s) will be removed from SVN after commit:": "The following missing file(s) or folder(s) will be removed from SVN after commit:",
-  "Do you want to continue?": "Do you want to continue?"
+  "Do you want to continue?": "Do you want to continue?",
+  "Commit message generation cancelled.": "Commit message generation cancelled.",
+  "Claude Code CLI was not found. Install Claude Code or configure its executable path.": "Claude Code CLI was not found. Install Claude Code or configure its executable path.",
+  "Codex CLI was not found. Install Codex or configure its executable path.": "Codex CLI was not found. Install Codex or configure its executable path.",
+  "AI commit message generation timed out.": "AI commit message generation timed out.",
+  "Claude Code CLI was not found, used template commit message.": "Claude Code CLI was not found, used template commit message.",
+  "Codex CLI was not found, used template commit message.": "Codex CLI was not found, used template commit message.",
+  "AI generation timed out, used template commit message.": "AI generation timed out, used template commit message."
 }

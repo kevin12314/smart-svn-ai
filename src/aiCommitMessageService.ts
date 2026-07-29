@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { spawn } from "child_process";
 import { configuration } from "./helpers/configuration";
 import { Repository } from "./repository";
 import { Resource } from "./resource";
@@ -6,6 +7,8 @@ import { Resource } from "./resource";
 type CommitMessageGenerationMode = "auto" | "ai" | "template";
 export type CommitMessageAIProvider =
   | "vscode-lm"
+  | "claude-code"
+  | "codex-cli"
   | "openai-compatible"
   | "azure-openai";
 export type OpenAICompatibleApiType = "auto" | "responses" | "chat-completions";
@@ -33,6 +36,42 @@ interface OpenAICompatibleProviderOptions {
   apiType?: OpenAICompatibleApiType;
 }
 
+interface CliExecutionOptions {
+  command: string;
+  args: string[];
+  cwd: string;
+  input: string;
+  timeout: number;
+  token?: vscode.CancellationToken;
+}
+
+interface CliExecutionResult {
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+  error?: unknown;
+  timedOut?: boolean;
+  cancelled?: boolean;
+}
+
+type CliRunner = (options: CliExecutionOptions) => Promise<CliExecutionResult>;
+
+interface ClaudeCodeProviderOptions {
+  command?: string;
+  model?: string;
+  cwd?: string;
+  timeout?: number;
+  runCli?: CliRunner;
+}
+
+interface CodexCliProviderOptions {
+  command?: string;
+  model?: string;
+  cwd?: string;
+  timeout?: number;
+  runCli?: CliRunner;
+}
+
 interface CommitMessagePromptContext {
   repository: Repository;
   resources: Resource[];
@@ -50,7 +89,15 @@ interface CommitMessageProvider {
 
 export interface CommitMessageAIResult {
   message?: string;
-  reason?: "no-model" | "missing-api-key" | "http-error" | "error";
+  reason?:
+    | "no-model"
+    | "missing-api-key"
+    | "http-error"
+    | "cli-not-found"
+    | "codex-cli-not-found"
+    | "timeout"
+    | "cancelled"
+    | "error";
   error?: unknown;
 }
 
@@ -657,6 +704,153 @@ function buildPromptMessages({
   return [instructionBlock, contextSections.join("\n")];
 }
 
+function runCliCommand(
+  options: CliExecutionOptions
+): Promise<CliExecutionResult> {
+  if (options.token?.isCancellationRequested) {
+    return Promise.resolve({
+      exitCode: null,
+      stdout: "",
+      stderr: "",
+      cancelled: true
+    });
+  }
+
+  return new Promise(resolve => {
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+    let timedOut = false;
+    let cancelled = false;
+
+    const child = spawn(options.command, options.args, {
+      cwd: options.cwd,
+      shell: false,
+      windowsHide: true,
+      stdio: ["pipe", "pipe", "pipe"]
+    });
+
+    const finish = (result: CliExecutionResult): void => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeoutHandle);
+      cancellationDisposable?.dispose();
+      resolve(result);
+    };
+
+    const timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      child.kill();
+    }, options.timeout);
+
+    const cancellationDisposable = options.token?.onCancellationRequested(
+      () => {
+        cancelled = true;
+        child.kill();
+      }
+    );
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", data => {
+      stdout += data;
+    });
+    child.stderr.on("data", data => {
+      stderr += data;
+    });
+
+    child.stdin.once("error", () => {
+      // The child may close stdin early when startup or authentication fails.
+    });
+    child.stdin.end(options.input);
+
+    child.once("error", error => {
+      finish({
+        exitCode: null,
+        stdout,
+        stderr,
+        error,
+        timedOut,
+        cancelled
+      });
+    });
+
+    child.once("close", exitCode => {
+      finish({
+        exitCode,
+        stdout,
+        stderr,
+        timedOut,
+        cancelled
+      });
+    });
+  });
+}
+
+function buildClaudeCodeArgs(model = ""): string[] {
+  const args = [
+    "-p",
+    "--output-format",
+    "text",
+    "--max-turns",
+    "1",
+    "--permission-mode",
+    "plan",
+    "--tools",
+    ""
+  ];
+
+  const selectedModel = model.trim();
+  if (selectedModel) {
+    args.push("--model", selectedModel);
+  }
+
+  return args;
+}
+
+function buildCodexCliArgs(model = ""): string[] {
+  const args = [
+    "exec",
+    "--ephemeral",
+    "--sandbox",
+    "read-only",
+    "--skip-git-repo-check",
+    "--color",
+    "never",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--disable",
+    "shell_tool",
+    "--disable",
+    "multi_agent",
+    "--disable",
+    "apps",
+    "--disable",
+    "hooks",
+    "-c",
+    'web_search="disabled"'
+  ];
+
+  const selectedModel = model.trim();
+  if (selectedModel) {
+    args.push("--model", selectedModel);
+  }
+
+  args.push("-");
+  return args;
+}
+
+function isCommandNotFoundError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
 class VscodeLanguageModelCommitMessageProvider
   implements CommitMessageProvider {
   public async generate(
@@ -749,6 +943,243 @@ class VscodeLanguageModelCommitMessageProvider
   }
 }
 
+class ClaudeCodeCommitMessageProvider implements CommitMessageProvider {
+  constructor(private readonly options: ClaudeCodeProviderOptions = {}) {}
+
+  public async generate(
+    prompt: string | CommitMessagePromptContext,
+    token?: vscode.CancellationToken
+  ): Promise<CommitMessageAIResult> {
+    const promptText =
+      typeof prompt === "string" ? prompt : buildPrompt(prompt);
+    const traceId =
+      typeof prompt === "string"
+        ? Date.now().toString(36)
+        : prompt.traceId ?? Date.now().toString(36);
+    const command = this.options.command ?? getClaudeCodeCommand();
+    const model = this.options.model ?? getClaudeCodeModel();
+    const cwd =
+      this.options.cwd ??
+      (typeof prompt === "string"
+        ? process.cwd()
+        : prompt.repository.workspaceRoot);
+    const startedAt = Date.now();
+
+    logCommitMessageTrace(
+      traceId,
+      `provider=claude-code start command=${command}`
+    );
+
+    try {
+      const result = await (this.options.runCli ?? runCliCommand)({
+        command,
+        args: buildClaudeCodeArgs(model),
+        cwd,
+        input: promptText,
+        timeout: this.options.timeout ?? getCommitMessageGenerationTimeout(),
+        token
+      });
+
+      if (result.cancelled) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=claude-code cancelled after ${getElapsedMilliseconds(
+            startedAt
+          )}ms`
+        );
+        return { reason: "cancelled" };
+      }
+
+      if (result.timedOut) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=claude-code timed out after ${getElapsedMilliseconds(
+            startedAt
+          )}ms`
+        );
+        return { reason: "timeout" };
+      }
+
+      if (isCommandNotFoundError(result.error)) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=claude-code command not found: ${command}`
+        );
+        return { reason: "cli-not-found", error: result.error };
+      }
+
+      if (result.error || result.exitCode !== 0) {
+        const stderr = result.stderr.trim();
+        logCommitMessageTrace(
+          traceId,
+          `provider=claude-code failed after ${getElapsedMilliseconds(
+            startedAt
+          )}ms exitCode=${String(result.exitCode)}${
+            stderr ? ` stderr=${stderr.slice(0, 1000)}` : ""
+          }`
+        );
+        return {
+          reason: "error",
+          error:
+            result.error ??
+            new Error(
+              stderr ||
+                `Claude Code exited with code ${String(result.exitCode)}.`
+            )
+        };
+      }
+
+      const message = sanitizeCommitMessageResponse(result.stdout);
+      if (!message) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=claude-code returned an empty response after ${getElapsedMilliseconds(
+            startedAt
+          )}ms`
+        );
+        return { reason: "error" };
+      }
+
+      logCommitMessageTrace(
+        traceId,
+        `provider=claude-code finished in ${getElapsedMilliseconds(
+          startedAt
+        )}ms`
+      );
+      return { message };
+    } catch (error) {
+      if (isCommandNotFoundError(error)) {
+        return { reason: "cli-not-found", error };
+      }
+
+      logCommitMessageTrace(
+        traceId,
+        `provider=claude-code failed after ${getElapsedMilliseconds(
+          startedAt
+        )}ms: ${error instanceof Error ? error.message : String(error)}`
+      );
+      return { reason: "error", error };
+    }
+  }
+}
+
+class CodexCliCommitMessageProvider implements CommitMessageProvider {
+  constructor(private readonly options: CodexCliProviderOptions = {}) {}
+
+  public async generate(
+    prompt: string | CommitMessagePromptContext,
+    token?: vscode.CancellationToken
+  ): Promise<CommitMessageAIResult> {
+    const promptText =
+      typeof prompt === "string" ? prompt : buildPrompt(prompt);
+    const traceId =
+      typeof prompt === "string"
+        ? Date.now().toString(36)
+        : prompt.traceId ?? Date.now().toString(36);
+    const command = this.options.command ?? getCodexCliCommand();
+    const model = this.options.model ?? getCodexCliModel();
+    const cwd =
+      this.options.cwd ??
+      (typeof prompt === "string"
+        ? process.cwd()
+        : prompt.repository.workspaceRoot);
+    const startedAt = Date.now();
+
+    logCommitMessageTrace(
+      traceId,
+      `provider=codex-cli start command=${command}`
+    );
+
+    try {
+      const result = await (this.options.runCli ?? runCliCommand)({
+        command,
+        args: buildCodexCliArgs(model),
+        cwd,
+        input: promptText,
+        timeout: this.options.timeout ?? getCommitMessageGenerationTimeout(),
+        token
+      });
+
+      if (result.cancelled) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=codex-cli cancelled after ${getElapsedMilliseconds(
+            startedAt
+          )}ms`
+        );
+        return { reason: "cancelled" };
+      }
+
+      if (result.timedOut) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=codex-cli timed out after ${getElapsedMilliseconds(
+            startedAt
+          )}ms`
+        );
+        return { reason: "timeout" };
+      }
+
+      if (isCommandNotFoundError(result.error)) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=codex-cli command not found: ${command}`
+        );
+        return { reason: "codex-cli-not-found", error: result.error };
+      }
+
+      if (result.error || result.exitCode !== 0) {
+        const stderr = result.stderr.trim();
+        logCommitMessageTrace(
+          traceId,
+          `provider=codex-cli failed after ${getElapsedMilliseconds(
+            startedAt
+          )}ms exitCode=${String(result.exitCode)}${
+            stderr ? ` stderr=${stderr.slice(0, 1000)}` : ""
+          }`
+        );
+        return {
+          reason: "error",
+          error:
+            result.error ??
+            new Error(
+              stderr || `Codex exited with code ${String(result.exitCode)}.`
+            )
+        };
+      }
+
+      const message = sanitizeCommitMessageResponse(result.stdout);
+      if (!message) {
+        logCommitMessageTrace(
+          traceId,
+          `provider=codex-cli returned an empty response after ${getElapsedMilliseconds(
+            startedAt
+          )}ms`
+        );
+        return { reason: "error" };
+      }
+
+      logCommitMessageTrace(
+        traceId,
+        `provider=codex-cli finished in ${getElapsedMilliseconds(startedAt)}ms`
+      );
+      return { message };
+    } catch (error) {
+      if (isCommandNotFoundError(error)) {
+        return { reason: "codex-cli-not-found", error };
+      }
+
+      logCommitMessageTrace(
+        traceId,
+        `provider=codex-cli failed after ${getElapsedMilliseconds(
+          startedAt
+        )}ms: ${error instanceof Error ? error.message : String(error)}`
+      );
+      return { reason: "error", error };
+    }
+  }
+}
+
 function getOpenAICompatibleProviderBaseUrl(): string {
   return configuration
     .get<string>("commitMessageGeneration.openAICompatible.baseUrl", "")
@@ -771,6 +1202,34 @@ function getOpenAICompatibleApiType(): OpenAICompatibleApiType {
 
 function getCommitMessageGenerationTimeout(): number {
   return configuration.get<number>("commitMessageGeneration.timeout", 30000);
+}
+
+function getClaudeCodeCommand(): string {
+  return (
+    configuration
+      .get<string>("commitMessageGeneration.claudeCode.command", "claude")
+      .trim() || "claude"
+  );
+}
+
+function getClaudeCodeModel(): string {
+  return configuration
+    .get<string>("commitMessageGeneration.claudeCode.model", "")
+    .trim();
+}
+
+function getCodexCliCommand(): string {
+  return (
+    configuration
+      .get<string>("commitMessageGeneration.codex.command", "codex")
+      .trim() || "codex"
+  );
+}
+
+function getCodexCliModel(): string {
+  return configuration
+    .get<string>("commitMessageGeneration.codex.model", "")
+    .trim();
 }
 
 function getAzureOpenAIEndpoint(): string {
@@ -1214,6 +1673,32 @@ async function generateOpenAICompatibleCommitMessageForTests(
   }
 }
 
+async function generateClaudeCodeCommitMessageForTests(
+  prompt: string,
+  options: {
+    command?: string;
+    model?: string;
+    cwd?: string;
+    timeout?: number;
+    runCli: CliRunner;
+  }
+): Promise<CommitMessageAIResult> {
+  return new ClaudeCodeCommitMessageProvider(options).generate(prompt);
+}
+
+async function generateCodexCliCommitMessageForTests(
+  prompt: string,
+  options: {
+    command?: string;
+    model?: string;
+    cwd?: string;
+    timeout?: number;
+    runCli: CliRunner;
+  }
+): Promise<CommitMessageAIResult> {
+  return new CodexCliCommitMessageProvider(options).generate(prompt);
+}
+
 function getCommitMessageAIProvider(): CommitMessageAIProvider {
   return configuration.get<CommitMessageAIProvider>(
     "commitMessageGeneration.provider",
@@ -1223,6 +1708,10 @@ function getCommitMessageAIProvider(): CommitMessageAIProvider {
 
 function createCommitMessageProvider(): CommitMessageProvider {
   switch (getCommitMessageAIProvider()) {
+    case "claude-code":
+      return new ClaudeCodeCommitMessageProvider();
+    case "codex-cli":
+      return new CodexCliCommitMessageProvider();
     case "openai-compatible":
       return new OpenAICompatibleCommitMessageProvider();
     case "azure-openai":
@@ -1323,8 +1812,12 @@ export async function generateAICommitMessage(
 }
 
 export const __test__ = {
+  buildClaudeCodeArgs,
+  buildCodexCliArgs,
   buildPrompt,
   buildPromptMessages,
+  generateClaudeCodeCommitMessageForTests,
+  generateCodexCliCommitMessageForTests,
   getOutputLanguageInstruction,
   readResponseText,
   sanitizeCommitMessageResponse,

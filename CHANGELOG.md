@@ -1,3 +1,20 @@
+# 3.7.0 (2026-07-29)
+
+
+### Features
+
+* add authenticated local Claude Code and Codex CLI providers for AI-generated SVN commit messages without requiring separate API keys
+* add configurable executable paths and model selection for the Claude Code and Codex providers
+
+### Bug Fixes
+
+* support cancellation, timeouts, missing CLI detection, and template fallback for local CLI commit message generation
+
+### Maintenance
+
+* restrict Codex commit message runs to ephemeral read-only sessions with shell, subagent, app, hook, and web search tools disabled
+* add localized provider settings and regression coverage for Claude Code and Codex CLI argument handling
+
 # 3.6.1 (2026-07-26)
 
 

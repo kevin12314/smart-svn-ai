@@ -366,6 +366,197 @@ suite("Commands Tests", () => {
     assert.strictEqual(text, "final message");
   });
 
+  test("Claude Code Provider Uses Safe Non-Interactive Arguments", function () {
+    assert.deepStrictEqual(aiCommitMessageTest.buildClaudeCodeArgs(), [
+      "-p",
+      "--output-format",
+      "text",
+      "--max-turns",
+      "1",
+      "--permission-mode",
+      "plan",
+      "--tools",
+      ""
+    ]);
+  });
+
+  test("Claude Code Provider Adds Configured Model Argument", function () {
+    assert.deepStrictEqual(
+      aiCommitMessageTest.buildClaudeCodeArgs(" sonnet "),
+      [
+        "-p",
+        "--output-format",
+        "text",
+        "--max-turns",
+        "1",
+        "--permission-mode",
+        "plan",
+        "--tools",
+        "",
+        "--model",
+        "sonnet"
+      ]
+    );
+  });
+
+  test("Claude Code Provider Sends Prompt Through Stdin", async function () {
+    let capturedCommand = "";
+    let capturedCwd = "";
+    let capturedInput = "";
+    let capturedArgs: string[] = [];
+
+    const result = await aiCommitMessageTest.generateClaudeCodeCommitMessageForTests(
+      "Generate from this SVN diff",
+      {
+        command: "claude-test",
+        model: "opus",
+        cwd: checkoutDir.fsPath,
+        timeout: 1234,
+        runCli: async options => {
+          capturedCommand = options.command;
+          capturedCwd = options.cwd;
+          capturedInput = options.input;
+          capturedArgs = options.args;
+
+          return {
+            exitCode: 0,
+            stdout:
+              "**Creating commit message**\n\nUpdate Claude Code provider",
+            stderr: ""
+          };
+        }
+      }
+    );
+
+    assert.strictEqual(capturedCommand, "claude-test");
+    assert.strictEqual(capturedCwd, checkoutDir.fsPath);
+    assert.strictEqual(capturedInput, "Generate from this SVN diff");
+    assert.deepStrictEqual(
+      capturedArgs,
+      aiCommitMessageTest.buildClaudeCodeArgs("opus")
+    );
+    assert.strictEqual(result.message, "Update Claude Code provider");
+  });
+
+  test("Claude Code Provider Reports Missing CLI", async function () {
+    const missingCliError = Object.assign(new Error("spawn claude ENOENT"), {
+      code: "ENOENT"
+    });
+
+    const result = await aiCommitMessageTest.generateClaudeCodeCommitMessageForTests(
+      "prompt",
+      {
+        runCli: async () => ({
+          exitCode: null,
+          stdout: "",
+          stderr: "",
+          error: missingCliError
+        })
+      }
+    );
+
+    assert.strictEqual(result.reason, "cli-not-found");
+  });
+
+  test("Claude Code Provider Reports Timeout", async function () {
+    const result = await aiCommitMessageTest.generateClaudeCodeCommitMessageForTests(
+      "prompt",
+      {
+        runCli: async () => ({
+          exitCode: null,
+          stdout: "",
+          stderr: "",
+          timedOut: true
+        })
+      }
+    );
+
+    assert.strictEqual(result.reason, "timeout");
+  });
+
+  test("Codex CLI Provider Uses Safe Non-Interactive Arguments", function () {
+    assert.deepStrictEqual(aiCommitMessageTest.buildCodexCliArgs(), [
+      "exec",
+      "--ephemeral",
+      "--sandbox",
+      "read-only",
+      "--skip-git-repo-check",
+      "--color",
+      "never",
+      "--ignore-user-config",
+      "--ignore-rules",
+      "--disable",
+      "shell_tool",
+      "--disable",
+      "multi_agent",
+      "--disable",
+      "apps",
+      "--disable",
+      "hooks",
+      "-c",
+      'web_search="disabled"',
+      "-"
+    ]);
+  });
+
+  test("Codex CLI Provider Adds Model And Sends Prompt Through Stdin", async function () {
+    let capturedCommand = "";
+    let capturedCwd = "";
+    let capturedInput = "";
+    let capturedArgs: string[] = [];
+
+    const result = await aiCommitMessageTest.generateCodexCliCommitMessageForTests(
+      "Generate from this SVN diff",
+      {
+        command: "codex-test",
+        model: "gpt-test",
+        cwd: checkoutDir.fsPath,
+        timeout: 1234,
+        runCli: async options => {
+          capturedCommand = options.command;
+          capturedCwd = options.cwd;
+          capturedInput = options.input;
+          capturedArgs = options.args;
+
+          return {
+            exitCode: 0,
+            stdout: "Update Codex CLI provider",
+            stderr: ""
+          };
+        }
+      }
+    );
+
+    assert.strictEqual(capturedCommand, "codex-test");
+    assert.strictEqual(capturedCwd, checkoutDir.fsPath);
+    assert.strictEqual(capturedInput, "Generate from this SVN diff");
+    assert.deepStrictEqual(
+      capturedArgs,
+      aiCommitMessageTest.buildCodexCliArgs("gpt-test")
+    );
+    assert.strictEqual(result.message, "Update Codex CLI provider");
+  });
+
+  test("Codex CLI Provider Reports Missing CLI", async function () {
+    const missingCliError = Object.assign(new Error("spawn codex ENOENT"), {
+      code: "ENOENT"
+    });
+
+    const result = await aiCommitMessageTest.generateCodexCliCommitMessageForTests(
+      "prompt",
+      {
+        runCli: async () => ({
+          exitCode: null,
+          stdout: "",
+          stderr: "",
+          error: missingCliError
+        })
+      }
+    );
+
+    assert.strictEqual(result.reason, "codex-cli-not-found");
+  });
+
   test("OpenAI Provider Returns Missing API Key For 401 Without Secret", async function () {
     const result = await aiCommitMessageTest.generateOpenAICompatibleCommitMessageForTests(
       "prompt",

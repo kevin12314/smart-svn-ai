@@ -2,7 +2,7 @@
     "name": "smart-svn-ai",
     "displayName": "%extension.displayName%",
     "description": "%extension.description%",
-    "version": "3.6.1",
+    "version": "3.7.0",
     "publisher": "kevin12314",
     "engines": {
         "vscode": "^1.91.0"
@@ -1216,11 +1216,15 @@
                     "type": "string",
                     "enum": [
                         "vscode-lm",
+                        "claude-code",
+                        "codex-cli",
                         "openai-compatible",
                         "azure-openai"
                     ],
                     "markdownEnumDescriptions": [
                         "%configuration.svn.commitMessageGeneration.provider.vscodeLM.description%",
+                        "%configuration.svn.commitMessageGeneration.provider.claudeCode.description%",
+                        "%configuration.svn.commitMessageGeneration.provider.codexCli.description%",
                         "%configuration.svn.commitMessageGeneration.provider.openAICompatible.description%",
                         "%configuration.svn.commitMessageGeneration.provider.azureOpenAI.description%"
                     ],
@@ -1288,6 +1292,28 @@
                     "minimum": 1000,
                     "description": "%configuration.svn.commitMessageGeneration.timeout.description%",
                     "default": 30000
+                },
+                "svn.commitMessageGeneration.claudeCode.command": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.claudeCode.command.description%",
+                    "default": "claude",
+                    "scope": "machine"
+                },
+                "svn.commitMessageGeneration.claudeCode.model": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.claudeCode.model.description%",
+                    "default": ""
+                },
+                "svn.commitMessageGeneration.codex.command": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.codex.command.description%",
+                    "default": "codex",
+                    "scope": "machine"
+                },
+                "svn.commitMessageGeneration.codex.model": {
+                    "type": "string",
+                    "description": "%configuration.svn.commitMessageGeneration.codex.model.description%",
+                    "default": ""
                 },
                 "svn.commitMessageGeneration.openAICompatible.baseUrl": {
                     "type": "string",
