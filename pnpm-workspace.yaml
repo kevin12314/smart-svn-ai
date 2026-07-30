@@ -1,4 +1,4 @@
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@vscode/vsce-sign'
-  - keytar
+allowBuilds:
+  '@parcel/watcher': true
+  '@vscode/vsce-sign': true
+  keytar: true
