@@ -2,7 +2,7 @@ import { jschardet } from "./vscodeModules";
 import * as chardet from "chardet";
 import { configuration } from "./helpers/configuration";
 
-if (jschardet.Constants) {
+if (jschardet.Constants && jschardet.MacCyrillicModel) {
   jschardet.Constants.MINIMUM_THRESHOLD = 0.2;
   jschardet.MacCyrillicModel.mTypicalPositiveRatio += 0.001;
 }

@@ -145,11 +145,9 @@ interface PreferredModelCriteria {
   id?: string;
 }
 
-const DEFAULT_VSCODE_LM_MODEL: Required<PreferredModelCriteria> = {
-  id: "oswe-vscode-prime",
-  vendor: "copilot",
-  family: "oswe-vscode",
-  version: "raptor-mini"
+const DEFAULT_VSCODE_LM_MODEL = {
+  id: "mai-code-1.1-flash",
+  vendor: "copilot"
 };
 
 function describeModel(model: vscode.LanguageModelChat): string {
@@ -227,13 +225,13 @@ function getPreferredModelCriteria(): PreferredModelCriteria {
   );
   const preferredModelVersion = configuration.get<string | null>(
     "commitMessageGeneration.vscodeLM.preferredModelVersion",
-    DEFAULT_VSCODE_LM_MODEL.version
+    null
   );
 
   return {
     vendor: preferredVendor ?? DEFAULT_VSCODE_LM_MODEL.vendor,
-    family: preferredModelFamily ?? DEFAULT_VSCODE_LM_MODEL.family,
-    version: preferredModelVersion ?? DEFAULT_VSCODE_LM_MODEL.version,
+    family: preferredModelFamily ?? undefined,
+    version: preferredModelVersion ?? undefined,
     id:
       !preferredVendor && !preferredModelFamily && !preferredModelVersion
         ? DEFAULT_VSCODE_LM_MODEL.id
@@ -464,7 +462,7 @@ async function selectModel(
   const preferredCriteria = getPreferredModelCriteria();
 
   // Query broad selectors first, then filter in memory. This keeps the
-  // default raptor-mini selection fast without relying on a slow version-only lookup.
+  // default model selection fast without relying on a slow version-only lookup.
   for (const selector of buildModelSelectors(preferredCriteria)) {
     const models = await vscode.lm.selectChatModels(selector);
     const matchedModel = pickBestMatchingModel(models, preferredCriteria);
@@ -1214,7 +1212,7 @@ function getClaudeCodeCommand(): string {
 
 function getClaudeCodeModel(): string {
   return configuration
-    .get<string>("commitMessageGeneration.claudeCode.model", "")
+    .get<string>("commitMessageGeneration.claudeCode.model", "haiku")
     .trim();
 }
 
@@ -1228,7 +1226,7 @@ function getCodexCliCommand(): string {
 
 function getCodexCliModel(): string {
   return configuration
-    .get<string>("commitMessageGeneration.codex.model", "")
+    .get<string>("commitMessageGeneration.codex.model", "gpt-6-luna")
     .trim();
 }
 
@@ -1812,6 +1810,9 @@ export async function generateAICommitMessage(
 }
 
 export const __test__ = {
+  getPreferredModelCriteria,
+  buildModelSelectors,
+  pickBestMatchingModel,
   buildClaudeCodeArgs,
   buildCodexCliArgs,
   buildPrompt,

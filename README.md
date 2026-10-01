@@ -66,9 +66,12 @@ Search for **Smart SVN AI** in the Visual Studio Code Marketplace.
 ## ⚙️ AI Configuration & Setup
 
 ### VS Code Copilot (Default Model Selection)
-When `svn.commitMessageGeneration.provider` is set to `vscode-lm`, the extension prefers the Copilot `oswe-vscode` family with the `raptor-mini` version by default.
+When `svn.commitMessageGeneration.provider` is set to `vscode-lm`, the extension uses Copilot **MAI-Code-1.1-Flash** (model ID `mai-code-1.1-flash`) by default.
 
-If you do not explicitly set `svn.commitMessageGeneration.vscodeLM.preferredVendor` or `svn.commitMessageGeneration.vscodeLM.preferredModelFamily`, the extension will try to resolve that default model from broader Copilot selectors first and then pick the best matching model in memory. This keeps the default selection fast while still targeting `oswe-vscode-prime` when it is available.
+If you leave `svn.commitMessageGeneration.vscodeLM.preferredVendor`, `svn.commitMessageGeneration.vscodeLM.preferredModelFamily`, and `svn.commitMessageGeneration.vscodeLM.preferredModelVersion` unset, the extension queries Copilot models and matches the default model by ID, without requiring a specific family or version. Explicit vendor, family, or version settings override the default model selection. Remove any previous `raptor-mini` version setting to use the new default. The model must be available through GitHub Copilot on your account; the extension does not silently substitute another model when it is unavailable.
+
+### Local CLI Defaults
+When using the local CLI providers, AI commit-message generation uses Claude `haiku` by default for `claude-code`, and `gpt-6-luna` by default for `codex-cli`. Set `svn.commitMessageGeneration.claudeCode.model` or `svn.commitMessageGeneration.codex.model` to override either model.
 
 ### OpenAI-Compatible Setup
 To use an OpenAI-compatible API for commit message generation:
@@ -149,6 +152,30 @@ Notes:
 - Switching is now repository-path-oriented, so you can switch to folders such as `servers/test`, `servers/prod`, `branches/release-1.0`, or any other valid SVN path in the same repository.
 - You no longer need the target path to match only `trunk`, `branches`, or `tags` layout rules before it can be selected.
 - It no longer contains a hidden branch/tag creation entry. Creation and switching are now documented and exposed as separate actions so the flow is explicit.
+
+---
+
+## 🛠️ Troubleshooting
+
+### The Activity Bar icon appears briefly and then disappears on Windows
+
+The SVN Activity Bar icon is hidden when the extension cannot detect an open SVN working copy. If the working-copy path contains Chinese or other non-ASCII characters, SVN detection may fail when the Windows **Language for non-Unicode programs** is set to an incompatible language, such as English.
+
+Check the working copy from the VS Code integrated terminal:
+
+```powershell
+svn --version --quiet
+svn info --show-item wc-root .
+```
+
+If `svn info` fails even though the working-copy root contains a `.svn` directory:
+
+- Set the Windows **Language for non-Unicode programs** to the language used by the path, such as Chinese (Traditional, Taiwan), and restart Windows.
+- Alternatively, move or check out the working copy to a path containing only ASCII characters.
+- The Windows **Beta: Use Unicode UTF-8 for worldwide language support** option may also help, but verify compatibility with other legacy applications before enabling it.
+- Confirm that `svn.path` points to a working `svn.exe` and that `svn.enabled` is `true`.
+
+For more diagnostic information, enable `"svn.showOutput": true`, select **SVN** in the VS Code Output panel, and check **Developer: Show Logs... → Extension Host** for repository-detection errors.
 
 ---
 

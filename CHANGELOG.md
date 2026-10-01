@@ -1,3 +1,18 @@
+# 3.7.1 (2026-10-01)
+
+
+### Bug Fixes
+
+* bundle encoding dependencies with the extension instead of resolving them from VS Code internals, and guard against unavailable encoding detection models
+* select the default Copilot MAI-Code-1.1-Flash model by ID without family or version constraints while honoring explicit model preferences
+
+### Maintenance
+
+* set local CLI default models to Claude `haiku` and Codex `gpt-6-luna`
+* update localized model setting descriptions and add regression coverage for default and explicit model selection
+* document Windows SVN working-copy detection troubleshooting for paths containing non-ASCII characters
+* update pnpm to 11.18.0 and skip dependency collection when packaging the bundled VSIX
+
 # 3.7.0 (2026-07-29)
 
 

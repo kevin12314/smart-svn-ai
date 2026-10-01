@@ -2,12 +2,12 @@
     "name": "smart-svn-ai",
     "displayName": "%extension.displayName%",
     "description": "%extension.description%",
-    "version": "3.7.0",
+    "version": "3.7.1",
     "publisher": "kevin12314",
     "engines": {
         "vscode": "^1.91.0"
     },
-    "packageManager": "pnpm@11.17.0",
+    "packageManager": "pnpm@11.18.0",
     "private": true,
     "icon": "images/log.png",
     "homepage": "https://github.com/kevin12314/smart-svn-ai/blob/main/README.md",
@@ -47,7 +47,7 @@
         "organize": "node ./out/tools/organize.js",
         "package:ovsx": "pnpm exec vsce package --follow-symlinks -o smart-svn-ai-ovsx.vsix",
         "publish:vsix": "pnpm exec vsce publish -i smart-svn-ai.vsix",
-        "package:vsix": "pnpm exec vsce package --follow-symlinks -o smart-svn-ai.vsix",
+        "package:vsix": "pnpm exec vsce package --no-dependencies --follow-symlinks -o smart-svn-ai.vsix",
         "semantic-release": "semantic-release",
         "style-check": "prettylint 'src/**/*.ts'",
         "style-fix": "prettier --write \"src/**/*.ts\"",
@@ -1253,7 +1253,7 @@
                         "null"
                     ],
                     "description": "%configuration.svn.commitMessageGeneration.vscodeLM.preferredModelVersion.description%",
-                    "default": "raptor-mini"
+                    "default": null
                 },
                 "svn.commitMessageGeneration.outputLanguage": {
                     "type": "string",
@@ -1302,7 +1302,7 @@
                 "svn.commitMessageGeneration.claudeCode.model": {
                     "type": "string",
                     "description": "%configuration.svn.commitMessageGeneration.claudeCode.model.description%",
-                    "default": ""
+                    "default": "haiku"
                 },
                 "svn.commitMessageGeneration.codex.command": {
                     "type": "string",
@@ -1313,7 +1313,7 @@
                 "svn.commitMessageGeneration.codex.model": {
                     "type": "string",
                     "description": "%configuration.svn.commitMessageGeneration.codex.model.description%",
-                    "default": ""
+                    "default": "gpt-6-luna"
                 },
                 "svn.commitMessageGeneration.openAICompatible.baseUrl": {
                     "type": "string",

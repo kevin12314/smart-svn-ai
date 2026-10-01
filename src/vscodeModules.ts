@@ -1,47 +1,9 @@
-// Only this file is allowed to import VSCode modules
+// Only this file is allowed to import VS Code modules and bundled dependencies.
 // tslint:disable: import-blacklist
 
-import { env, l10n, window } from "vscode";
+import * as iconv from "iconv-lite-umd";
+import * as jschardet from "jschardet";
 
-declare const __webpack_require__: typeof require;
-declare const __non_webpack_require__: typeof require;
-
-function getNodeModule<T>(moduleName: string, showError = true): T | undefined {
-  const r =
-    typeof __webpack_require__ === "function"
-      ? __non_webpack_require__
-      : require;
-
-  const paths = [
-    `${env.appRoot}/node_modules.asar/${moduleName}`,
-    `${env.appRoot}/node_modules/${moduleName}`,
-    moduleName
-  ];
-
-  for (const p of paths) {
-    try {
-      return r(p);
-    } catch {
-      // Not in path.
-    }
-  }
-
-  if (showError) {
-    window.showErrorMessage(l10n.t("Missing dependency: {0}", moduleName));
-  }
-
-  return undefined;
-}
-
-let iconv_lite = getNodeModule(
-  "iconv-lite-umd",
-  false
-) as typeof import("iconv-lite-umd");
-if (!iconv_lite) {
-  iconv_lite = getNodeModule("iconv-lite") as typeof import("iconv-lite");
-}
-export const iconv = iconv_lite;
-
-export const jschardet = getNodeModule(
-  "jschardet"
-) as typeof import("jschardet");
+// These dependencies must be bundled with the extension. Resolving them from
+// VS Code's installation makes activation depend on VS Code internals.
+export { iconv, jschardet };

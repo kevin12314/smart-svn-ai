@@ -80,7 +80,10 @@ suite("Command Tests", () => {
     const result = await command.resolve([]);
 
     assert.strictEqual(result.length, 1);
-    assert.strictEqual(result[0].resourceUri.fsPath, Uri.file("/repo/active.txt").fsPath);
+    assert.strictEqual(
+      result[0].resourceUri.fsPath,
+      Uri.file("/repo/active.txt").fsPath
+    );
   });
 
   test("Resource commands use stable serializable arguments", () => {
