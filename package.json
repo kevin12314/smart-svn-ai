@@ -45,7 +45,7 @@
         "l10n:pseudo": "pnpm exec @vscode/l10n-dev generate-pseudo -o ./l10n ./l10n/bundle.l10n.json ./package.nls.json",
         "l10n:check": "node ./scripts/check-l10n-missing.js",
         "organize": "node ./out/tools/organize.js",
-        "package:ovsx": "pnpm exec vsce package --follow-symlinks -o smart-svn-ai-ovsx.vsix",
+        "package:ovsx": "pnpm exec vsce package --no-dependencies --follow-symlinks -o smart-svn-ai-ovsx.vsix",
         "publish:vsix": "pnpm exec vsce publish -i smart-svn-ai.vsix",
         "package:vsix": "pnpm exec vsce package --no-dependencies --follow-symlinks -o smart-svn-ai.vsix",
         "semantic-release": "semantic-release",
