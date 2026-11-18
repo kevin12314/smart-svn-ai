@@ -7,7 +7,7 @@
     "engines": {
         "vscode": "^1.91.0"
     },
-    "packageManager": "pnpm@11.18.0",
+    "packageManager": "pnpm@12.21.0",
     "private": true,
     "icon": "images/log.png",
     "homepage": "https://github.com/kevin12314/smart-svn-ai/blob/main/README.md",
