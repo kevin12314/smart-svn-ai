@@ -146,7 +146,7 @@ interface PreferredModelCriteria {
 }
 
 const DEFAULT_VSCODE_LM_MODEL = {
-  id: "mai-code-1.1-flash",
+  id: "mai-code-2-flash",
   vendor: "copilot"
 };
 

@@ -24,14 +24,14 @@ function createModel(
 }
 
 suite("AI Commit Message Model Selection", () => {
-  test("Defaults to Copilot MAI-Code-1.1-Flash without version constraints", () => {
+  test("Defaults to Copilot MAI Code 2 Flash without version constraints", () => {
     const criteria = aiCommitMessageTest.getPreferredModelCriteria();
 
     assert.deepStrictEqual(criteria, {
       vendor: "copilot",
       family: undefined,
       version: undefined,
-      id: "mai-code-1.1-flash"
+      id: "mai-code-2-flash"
     });
     assert.deepStrictEqual(aiCommitMessageTest.buildModelSelectors(criteria), [
       { vendor: "copilot" },
@@ -41,15 +41,16 @@ suite("AI Commit Message Model Selection", () => {
 
   test("Selects the default model by ID regardless of family or version", () => {
     const preferred = createModel(
-      "mai-code-1.1-flash",
+      "mai-code-2-flash",
       "copilot",
       "mai-code",
       "provider-version"
     );
     const selected = aiCommitMessageTest.pickBestMatchingModel(
       [
-        createModel("oswe-vscode-prime", "copilot", "oswe-vscode", "raptor-mini"),
-        createModel("mai-code-1.1-flash", "other"),
+        createModel("mai-code-1.1-flash"),
+        createModel("mai-code-2"),
+        createModel("mai-code-2-flash", "other"),
         preferred
       ],
       aiCommitMessageTest.getPreferredModelCriteria()
@@ -79,7 +80,7 @@ suite("AI Commit Message Model Selection", () => {
     assert.strictEqual(
       aiCommitMessageTest.pickBestMatchingModel(
         [
-          createModel("mai-code-1.1-flash"),
+          createModel("mai-code-2-flash"),
           createModel("old-custom", "custom", "custom-family", "1"),
           preferred
         ],

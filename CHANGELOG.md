@@ -1,3 +1,9 @@
+# 3.7.2 (2026-11-18)
+
+### Maintenance
+
+* use Copilot MAI Code 2 Flash by default when generating SVN commit messages with the VS Code language model provider
+
 # 3.7.1 (2026-10-01)
 
 

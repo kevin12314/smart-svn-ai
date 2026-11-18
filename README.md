@@ -66,7 +66,7 @@ Search for **Smart SVN AI** in the Visual Studio Code Marketplace.
 ## ⚙️ AI Configuration & Setup
 
 ### VS Code Copilot (Default Model Selection)
-When `svn.commitMessageGeneration.provider` is set to `vscode-lm`, the extension uses Copilot **MAI-Code-1.1-Flash** (model ID `mai-code-1.1-flash`) by default.
+When `svn.commitMessageGeneration.provider` is set to `vscode-lm`, the extension uses Copilot **MAI Code 2 Flash** (model ID `mai-code-2-flash`) by default.
 
 If you leave `svn.commitMessageGeneration.vscodeLM.preferredVendor`, `svn.commitMessageGeneration.vscodeLM.preferredModelFamily`, and `svn.commitMessageGeneration.vscodeLM.preferredModelVersion` unset, the extension queries Copilot models and matches the default model by ID, without requiring a specific family or version. Explicit vendor, family, or version settings override the default model selection. Remove any previous `raptor-mini` version setting to use the new default. The model must be available through GitHub Copilot on your account; the extension does not silently substitute another model when it is unavailable.
 
